@@ -2,979 +2,767 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EVTHS Supervision — Programme Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EVTHS Supervision — Live Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 body{background:#f0f2f5;color:#252423;min-height:100vh}
 
-/* ── Top bar ── */
-.topbar{background:#1f3864;color:#fff;height:48px;display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.topbar .logo{font-size:13px;font-weight:700;letter-spacing:.5px;opacity:.95}
-.topbar .subtitle{font-size:11px;opacity:.65;margin-left:4px}
+/* topbar */
+.topbar{background:#1f3864;color:#fff;height:50px;display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.topbar .logo{font-size:14px;font-weight:700;letter-spacing:.4px}
+.topbar .sep{opacity:.3;font-size:18px}
+.topbar .sub{font-size:11px;opacity:.6}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.last-refresh{font-size:11px;opacity:.55}
-.kobo-status{font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);cursor:pointer;transition:background .2s;white-space:nowrap}
-.kobo-status:hover{background:rgba(255,255,255,.2)}
-.kobo-status.connected{background:rgba(0,182,155,.2);border-color:rgba(0,182,155,.5)}
-.btn-refresh{font-size:11px;padding:4px 12px;border-radius:4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .2s}
-.btn-refresh:hover{background:rgba(255,255,255,.25)}
-.btn-refresh:disabled{opacity:.5;cursor:not-allowed}
-.spin{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+.refresh-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 12px;border-radius:4px;font-size:11.5px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.refresh-btn:hover{background:rgba(255,255,255,.2)}
+.refresh-btn.loading{opacity:.6;pointer-events:none}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#4caf50;flex-shrink:0}
+.status-dot.loading{background:#f59e0b;animation:pulse 1s infinite}
+.status-dot.error{background:#dc3545}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.last-sync{font-size:10px;opacity:.55}
 
-/* ── Page tabs ── */
-.tabs{background:#fff;border-bottom:1px solid #ddd;display:flex;padding:0 20px;position:sticky;top:48px;z-index:99;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.tab{padding:11px 18px;font-size:12.5px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;color:#605e5c;white-space:nowrap;transition:all .15s}
-.tab:hover{color:#1f3864;background:#f3f4f6}
+/* tabs */
+.tabs{background:#fff;border-bottom:1px solid #ddd;display:flex;padding:0 20px;position:sticky;top:50px;z-index:99;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.tab{padding:12px 18px;font-size:12.5px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;color:#605e5c;white-space:nowrap;transition:all .15s}
+.tab:hover{color:#1f3864;background:#f8f9fb}
 .tab.active{color:#1f3864;border-bottom-color:#1f7cd5}
 
-/* ── Layout ── */
+/* layout */
 .layout{display:flex;min-height:calc(100vh - 94px)}
 
-/* ── Filter panel ── */
-.filters{width:220px;min-width:220px;background:#fff;border-right:1px solid #e1dfdd;padding:16px 14px;overflow-y:auto;position:sticky;top:94px;height:calc(100vh - 94px)}
-.filter-title{font-size:11px;font-weight:700;color:#605e5c;text-transform:uppercase;letter-spacing:.8px;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #edebe9}
-.filter-title:first-child{margin-top:0}
-.filter-group{margin-bottom:4px}
-.filter-item{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:12.5px;color:#323130;transition:background .1s}
-.filter-item:hover{background:#f3f4f6}
-.filter-item input[type=checkbox]{accent-color:#1f7cd5;width:13px;height:13px;cursor:pointer}
-.filter-item.active{background:#deecf9;color:#1f3864;font-weight:600}
-.filter-count{margin-left:auto;font-size:10px;color:#a19f9d;background:#f3f4f6;border-radius:10px;padding:1px 6px}
-.date-inputs{display:flex;flex-direction:column;gap:6px;margin-top:4px}
-.date-inputs input{width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11.5px;color:#323130}
-.date-inputs label{font-size:11px;color:#605e5c}
-.clear-btn{width:100%;padding:6px;background:#f3f4f6;border:1px solid #ddd;border-radius:4px;font-size:11.5px;cursor:pointer;color:#605e5c;margin-top:10px;font-weight:600}
-.clear-btn:hover{background:#edebe9}
+/* filter panel */
+.filters{width:225px;min-width:225px;background:#fff;border-right:1px solid #e1dfdd;padding:14px 12px;overflow-y:auto;position:sticky;top:94px;height:calc(100vh - 94px)}
+.f-section{margin-bottom:14px}
+.f-title{font-size:10.5px;font-weight:700;color:#605e5c;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #edebe9}
+.f-item{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:12px;color:#323130;transition:background .1s}
+.f-item:hover{background:#f3f4f6}
+.f-item input[type=checkbox]{accent-color:#1f7cd5;cursor:pointer}
+.f-cnt{margin-left:auto;font-size:10px;color:#a19f9d;background:#f3f4f6;border-radius:8px;padding:1px 5px}
+.f-date{display:flex;flex-direction:column;gap:5px}
+.f-date label{font-size:10.5px;color:#605e5c}
+.f-date input{width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11.5px}
+.clear-btn{width:100%;padding:7px;background:#fff;border:1px solid #c8c6c4;border-radius:4px;font-size:11.5px;cursor:pointer;color:#605e5c;margin-top:10px;font-weight:600}
+.clear-btn:hover{background:#f3f4f6}
 
-/* ── Main content ── */
-.main{flex:1;padding:20px;overflow-y:auto;min-width:0}
-.page{display:none}.page.active{display:block}
+/* record count banner */
+.rec-banner{background:#deecf9;padding:6px 16px;font-size:11.5px;color:#1f3864;display:flex;align-items:center;gap:8px;border-bottom:1px solid #b3d4f0}
+.rec-banner strong{font-weight:700}
 
-/* ── Cards row ── */
+/* main */
+.main{flex:1;overflow-y:auto;min-width:0;display:flex;flex-direction:column}
+.page{display:none;padding:20px;flex:1}.page.active{display:block}
+
+/* kpi cards */
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
-.kpi-card{background:#fff;border-radius:6px;padding:14px 16px;border:1px solid #e1dfdd;position:relative;overflow:hidden}
-.kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:2px 0 0 2px}
-.kpi-card.blue::before{background:#1f7cd5}
-.kpi-card.teal::before{background:#00b69b}
-.kpi-card.amber::before{background:#f59e0b}
-.kpi-card.red::before{background:#dc3545}
-.kpi-card.green::before{background:#198754}
-.kpi-card.purple::before{background:#6f42c1}
-.kpi-label{font-size:11px;color:#605e5c;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
-.kpi-value{font-size:26px;font-weight:700;color:#252423;line-height:1.1}
-.kpi-sub{font-size:11px;color:#a19f9d;margin-top:4px}
+.kpi{background:#fff;border-radius:6px;padding:14px 16px;border:1px solid #e1dfdd;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:2px 0 0 2px}
+.kpi.blue::before{background:#1f7cd5}.kpi.teal::before{background:#00b69b}
+.kpi.amber::before{background:#f59e0b}.kpi.red::before{background:#dc3545}
+.kpi.green::before{background:#198754}.kpi.purple::before{background:#6f42c1}
+.kpi.navy::before{background:#1f3864}
+.kpi-lbl{font-size:10.5px;color:#605e5c;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.kpi-val{font-size:26px;font-weight:700;color:#252423;line-height:1.1}
+.kpi-sub{font-size:10.5px;color:#a19f9d;margin-top:3px}
 .kpi-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-top:5px}
 .kpi-badge.good{background:#d4edda;color:#155724}
 .kpi-badge.warn{background:#fff3cd;color:#856404}
 .kpi-badge.bad{background:#f8d7da;color:#721c24}
 
-/* ── Charts ── */
+/* charts */
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 .chart-grid.three{grid-template-columns:1fr 1fr 1fr}
 .chart-grid.full{grid-template-columns:1fr}
-.chart-card{background:#fff;border-radius:6px;border:1px solid #e1dfdd;padding:16px;min-width:0}
-.chart-head{font-size:13px;font-weight:700;color:#1f3864;margin-bottom:4px}
-.chart-sub{font-size:11px;color:#a19f9d;margin-bottom:14px}
-.chart-wrap{position:relative}
+.cc{background:#fff;border-radius:6px;border:1px solid #e1dfdd;padding:16px;min-width:0}
+.cc-head{font-size:13px;font-weight:700;color:#1f3864;margin-bottom:2px}
+.cc-sub{font-size:10.5px;color:#a19f9d;margin-bottom:14px}
+.cwrap{position:relative}
 
-/* ── Table ── */
+/* compliance table */
 .tbl-card{background:#fff;border-radius:6px;border:1px solid #e1dfdd;padding:16px;margin-bottom:16px;overflow-x:auto}
-.tbl-head{font-size:13px;font-weight:700;color:#1f3864;margin-bottom:12px}
+.tbl-title{font-size:13px;font-weight:700;color:#1f3864;margin-bottom:12px}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{background:#f8f9fa;padding:7px 10px;text-align:left;font-weight:700;color:#605e5c;font-size:11.5px;border-bottom:2px solid #dee2e6;white-space:nowrap}
+th{background:#f8f9fa;padding:7px 10px;text-align:left;font-weight:700;color:#605e5c;font-size:11px;border-bottom:2px solid #dee2e6;white-space:nowrap}
 td{padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#323130;vertical-align:middle}
 tr:hover td{background:#f8f9fb}
-.pct-cell{display:flex;align-items:center;gap:8px}
-.pct-bar-bg{flex:1;background:#f0f2f5;border-radius:3px;height:8px;min-width:60px}
-.pct-bar-fill{height:8px;border-radius:3px;transition:width .3s}
-.pct-label{font-size:11.5px;font-weight:700;min-width:36px;text-align:right}
-.rag-green{color:#155724;background:#d4edda;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
-.rag-amber{color:#856404;background:#fff3cd;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
-.rag-red{color:#721c24;background:#f8d7da;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
-.rag-na{color:#a19f9d;font-size:11px}
-.section-tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:700;margin-right:6px}
-.tag-supply{background:#d6eaf8;color:#1a5276}
-.tag-equip{background:#d5f5e3;color:#145a32}
-.tag-logist{background:#fdebd0;color:#784212}
-.tag-train{background:#e8daef;color:#512e5f}
-.tag-clinical{background:#fdf2f8;color:#78281f}
-.tag-outcome{background:#ebfef4;color:#0b5345}
+.bar-wrap{display:flex;align-items:center;gap:7px}
+.bar-bg{flex:1;background:#f0f2f5;border-radius:3px;height:8px;min-width:50px}
+.bar-fill{height:8px;border-radius:3px}
+.bar-lbl{font-size:11px;font-weight:700;min-width:34px;text-align:right}
+.g{color:#155724;background:#d4edda;padding:2px 7px;border-radius:9px;font-size:10.5px;font-weight:700}
+.a{color:#856404;background:#fff3cd;padding:2px 7px;border-radius:9px;font-size:10.5px;font-weight:700}
+.r{color:#721c24;background:#f8d7da;padding:2px 7px;border-radius:9px;font-size:10.5px;font-weight:700}
+.na{color:#a19f9d;font-size:11px}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;margin-right:6px}
+.t-sup{background:#d6eaf8;color:#1a5276}
+.t-eq{background:#d5f5e3;color:#145a32}
+.t-tr{background:#e8daef;color:#512e5f}
+.t-cl{background:#fdf2f8;color:#78281f}
+.t-oc{background:#ebfef4;color:#0b5345}
 
-/* ── Progress bars ── */
-.progress-section{margin-bottom:20px}
+/* progress bars */
+.prog-section{margin-bottom:20px}
 .prog-row{background:#fff;border-radius:6px;border:1px solid #e1dfdd;padding:14px 18px;margin-bottom:10px}
-.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.prog-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .prog-title{font-size:13px;font-weight:700;color:#1f3864}
-.prog-nums{font-size:12px;color:#605e5c}
-.prog-nums span{font-weight:700;color:#252423}
-.prog-track{background:#f0f2f5;border-radius:6px;height:16px;overflow:hidden;position:relative}
-.prog-fill{height:100%;border-radius:6px;transition:width .5s;display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.prog-nums{font-size:11.5px;color:#605e5c}
+.prog-nums b{color:#252423}
+.prog-track{background:#f0f2f5;border-radius:6px;height:16px;overflow:hidden}
+.prog-fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;transition:width .5s}
 .prog-fill span{font-size:10px;color:#fff;font-weight:700}
-.coord-bars{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
-.coord-bar{text-align:center}
-.coord-name{font-size:9.5px;color:#605e5c;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coord-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.coord-cell{text-align:center}
+.coord-name{font-size:9px;color:#605e5c;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .coord-val{font-size:16px;font-weight:700;color:#1f3864}
-.coord-tgt{font-size:9.5px;color:#a19f9d}
+.coord-tgt{font-size:9px;color:#a19f9d}
 
-/* ── Donut legend ── */
-.donut-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#605e5c}
-.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* loading overlay */
+.loading-overlay{position:fixed;inset:0;background:rgba(240,242,245,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:14px}
+.spinner{width:40px;height:40px;border:3px solid #e0e0e0;border-top-color:#1f7cd5;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{font-size:13px;color:#605e5c;font-weight:600}
+.loading-overlay small{font-size:11px;color:#a19f9d}
+.loading-overlay.hidden{display:none}
 
-/* ── Loading overlay ── */
-.loading-overlay{position:fixed;inset:0;background:rgba(31,56,100,.6);backdrop-filter:blur(3px);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.loading-overlay.active{display:flex}
-.loading-spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.9s linear infinite}
-.loading-text{color:#fff;font-size:14px;font-weight:600;opacity:.9}
+/* error toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#1f3864;color:#fff;padding:12px 18px;border-radius:6px;font-size:12px;max-width:340px;z-index:300;display:flex;gap:10px;align-items:flex-start;transform:translateY(80px);opacity:0;transition:all .3s}
+.toast.show{transform:none;opacity:1}
+.toast-close{cursor:pointer;opacity:.7;margin-left:auto;font-size:14px;flex-shrink:0}
 
-/* ── Token modal ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}
-.modal-overlay.active{display:flex}
-.modal{background:#fff;border-radius:10px;padding:28px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.modal h2{font-size:16px;font-weight:700;color:#1f3864;margin-bottom:6px}
-.modal p{font-size:12.5px;color:#605e5c;margin-bottom:18px;line-height:1.6}
-.modal label{font-size:12px;font-weight:600;color:#323130;display:block;margin-bottom:6px}
-.modal input[type=text],.modal input[type=password]{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;color:#323130;margin-bottom:14px;transition:border .15s}
-.modal input:focus{outline:none;border-color:#1f7cd5}
-.modal-btns{display:flex;gap:10px;margin-top:6px}
-.btn-primary{padding:9px 20px;background:#1f3864;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
-.btn-primary:hover{background:#2755a3}
-.btn-secondary{padding:9px 20px;background:#f3f4f6;color:#605e5c;border:1px solid #ddd;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer}
-.btn-secondary:hover{background:#edebe9}
-.modal-hint{font-size:11px;color:#a19f9d;margin-bottom:16px;background:#f8f9fa;padding:8px 12px;border-radius:4px;border-left:3px solid #1f7cd5}
+/* legend */
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#605e5c}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
-/* ── Field mapping panel ── */
-.field-map-panel{background:#fff;border-radius:8px;border:1px solid #e1dfdd;padding:18px;margin-bottom:20px}
-.field-map-title{font-size:13px;font-weight:700;color:#1f3864;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.field-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px}
-.field-row{display:flex;gap:8px;align-items:center;padding:3px 6px;border-radius:3px}
-.field-row.ok{background:#f0fdf4}
-.field-row.missing{background:#fff5f5}
-.field-key{font-weight:700;color:#1f3864;min-width:90px}
-.field-val{color:#605e5c;font-size:11px}
-.field-badge-ok{font-size:10px;padding:1px 6px;background:#d4edda;color:#155724;border-radius:8px;margin-left:auto}
-.field-badge-miss{font-size:10px;padding:1px 6px;background:#f8d7da;color:#721c24;border-radius:8px;margin-left:auto}
-
-/* ── Error banner ── */
-.error-banner{background:#fdf0f0;border:1px solid #f8c4c4;border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:12.5px;color:#7b1c1c;display:none}
-.error-banner.active{display:block}
-
-/* ── Empty state ── */
-.empty-state{text-align:center;padding:80px 40px;color:#a19f9d}
-.empty-state h3{font-size:15px;font-weight:600;color:#605e5c;margin-bottom:8px}
-.empty-state p{font-size:13px}
-.empty-state .connect-btn{display:inline-block;margin-top:20px;padding:10px 24px;background:#1f3864;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none}
-
-/* ── No data ── */
-.no-data{text-align:center;padding:40px;color:#a19f9d;font-size:13px}
-
-/* ── Responsive ── */
-@media(max-width:900px){.chart-grid{grid-template-columns:1fr!important}.filters{display:none}}
+@media(max-width:900px){.chart-grid,.chart-grid.three{grid-template-columns:1fr!important}.filters{position:static;width:100%;height:auto;border-right:none;border-bottom:1px solid #e1dfdd}}
 </style>
 </head>
 <body>
 
-<!-- ════════ LOADING OVERLAY ════════ -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-spinner"></div>
-  <div class="loading-text" id="loadingText">Connecting to KoboToolbox…</div>
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p id="loadingMsg">Connecting to KoboToolbox…</p>
+  <small id="loadingSub">Fetching live data from your form</small>
 </div>
 
-<!-- ════════ TOKEN MODAL ════════ -->
-<div class="modal-overlay" id="tokenModal">
-  <div class="modal">
-    <h2>🔗 Connect to KoboToolbox</h2>
-    <p>Enter your KoboToolbox API token to fetch live supervision data. Your token is saved locally in the browser and never sent anywhere except KoboToolbox.</p>
-    <div class="modal-hint">
-      <strong>How to get your token:</strong> Log in to kf.kobotoolbox.org → Click your account name (top right) → Account Settings → API Token
-    </div>
-    <label>API Token</label>
-    <input type="password" id="tokenInput" placeholder="Paste your KoboToolbox API token here…">
-    <label>Form Asset UID <span style="font-weight:400;color:#a19f9d">(pre-filled from your form URL)</span></label>
-    <input type="text" id="uidInput" value="aaHKcisJXEqPH2xkEa3XkS">
-    <div class="modal-btns">
-      <button class="btn-primary" onclick="saveAndConnect()">Connect & Load Data</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
+<!-- Toast -->
+<div id="toast" class="toast">
+  <span id="toastMsg"></span>
+  <span class="toast-close" onclick="this.parentElement.classList.remove('show')">✕</span>
 </div>
 
-<!-- ════════ TOP BAR ════════ -->
+<!-- Top bar -->
 <div class="topbar">
   <span class="logo">EVTHS SUPERVISION</span>
-  <span class="subtitle">Nagaon District · HIV & Syphilis Prevention in Pregnancy</span>
+  <span class="sep">|</span>
+  <span class="sub">Nagaon District · HIV & Syphilis Prevention in Pregnancy</span>
   <div class="topbar-right">
-    <span class="last-refresh" id="refreshTime"></span>
-    <span class="kobo-status" id="koboStatus" onclick="showTokenModal()" title="Click to configure KoboToolbox connection">⚪ Not connected</span>
-    <button class="btn-refresh" id="refreshBtn" onclick="loadKoboData()" title="Refresh data from KoboToolbox">
-      <span id="refreshIcon">↻</span> Refresh
+    <div id="statusDot" class="status-dot loading"></div>
+    <span id="lastSync" class="last-sync">Connecting…</span>
+    <button id="refreshBtn" class="refresh-btn loading" onclick="fetchData()">
+      ↻ Refresh
     </button>
   </div>
 </div>
 
-<!-- ════════ TABS ════════ -->
+<!-- Page tabs -->
 <div class="tabs">
-  <div class="tab active" onclick="showPage('tva',event)">Target vs Achievement</div>
-  <div class="tab" onclick="showPage('infographics',event)">Infographics</div>
-  <div class="tab" onclick="showPage('dashboard',event)">Programme Dashboard</div>
-  <div class="tab" onclick="showPage('fieldmap',event)">⚙ Field Mapping</div>
+  <div class="tab active" data-page="tva" onclick="showPage('tva',this)">Target vs Achievement</div>
+  <div class="tab" data-page="info" onclick="showPage('info',this)">Infographics</div>
+  <div class="tab" data-page="dash" onclick="showPage('dash',this)">Programme Dashboard</div>
 </div>
 
 <div class="layout">
-<!-- ════════ FILTER PANEL ════════ -->
+
+<!-- ═══ FILTERS ═══ -->
 <div class="filters">
-  <div class="filter-title">Validation Status</div>
-  <div id="filter-validation" class="filter-group"></div>
-
-  <div class="filter-title">Facility Type</div>
-  <div id="filter-facility" class="filter-group"></div>
-
-  <div class="filter-title">Block</div>
-  <div id="filter-block" class="filter-group"></div>
-
-  <div class="filter-title">Block Coordinator</div>
-  <div id="filter-coord" class="filter-group"></div>
-
-  <div class="filter-title">District</div>
-  <div id="filter-district" class="filter-group"></div>
-
-  <div class="filter-title">Date Range</div>
-  <div class="date-inputs">
-    <div><label>From</label><input type="date" id="date-from"></div>
-    <div><label>To</label><input type="date" id="date-to"></div>
+  <div class="f-section">
+    <div class="f-title">Validation Status</div>
+    <div id="fv-validation"></div>
   </div>
-
-  <button class="clear-btn" onclick="clearFilters()">Clear All Filters</button>
+  <div class="f-section">
+    <div class="f-title">Facility Type</div>
+    <div id="fv-facility"></div>
+  </div>
+  <div class="f-section">
+    <div class="f-title">Block</div>
+    <div id="fv-block"></div>
+  </div>
+  <div class="f-section">
+    <div class="f-title">Block Coordinator</div>
+    <div id="fv-coord"></div>
+  </div>
+  <div class="f-section">
+    <div class="f-title">District</div>
+    <div id="fv-district"></div>
+  </div>
+  <div class="f-section">
+    <div class="f-title">Date Range</div>
+    <div class="f-date">
+      <div><label>From</label><input type="date" id="df" value="2020-01-01"></div>
+      <div><label>To</label><input type="date" id="dt" value="2030-12-31"></div>
+    </div>
+  </div>
+  <button class="clear-btn" onclick="clearFilters()">✕ Clear All Filters</button>
 </div>
 
-<!-- ════════ MAIN PAGES ════════ -->
+<!-- ═══ MAIN ═══ -->
 <div class="main">
-  <div class="error-banner" id="errorBanner"></div>
-
-  <!-- PAGE 1: TARGET VS ACHIEVEMENT -->
-  <div id="page-tva" class="page active">
-    <div id="tva-content"></div>
+  <div id="recBanner" class="rec-banner" style="display:none">
+    Showing <strong id="recCount">0</strong> of <strong id="recTotal">0</strong> records
+    <span style="margin-left:auto;font-size:10px;color:#1f3864;opacity:.7" id="syncTime"></span>
   </div>
 
-  <!-- PAGE 2: INFOGRAPHICS -->
-  <div id="page-infographics" class="page">
-    <div id="infographics-content"></div>
-  </div>
-
-  <!-- PAGE 3: PROGRAMME DASHBOARD -->
-  <div id="page-dashboard" class="page">
-    <div id="dashboard-content"></div>
-  </div>
-
-  <!-- PAGE 4: FIELD MAPPING -->
-  <div id="page-fieldmap" class="page">
-    <div id="fieldmap-content"></div>
-  </div>
+  <div id="page-tva" class="page active"><div id="c-tva"></div></div>
+  <div id="page-info" class="page"><div id="c-info"></div></div>
+  <div id="page-dash" class="page"><div id="c-dash"></div></div>
 </div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════
-   KOBO CONFIGURATION
-═══════════════════════════════════════════════ */
-let KOBO_ASSET_UID = localStorage.getItem('kobo_asset_uid') || 'aaHKcisJXEqPH2xkEa3XkS';
-const KOBO_BASE_URL = 'https://kf.kobotoolbox.org';
-let koboApiToken = localStorage.getItem('kobo_api_token') || '';
+/* ═══════════════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════════════ */
+const KOBO_ASSET  = 'aaHKcisJXEqPH2xkEa3XkS';
+const KOBO_TOKEN  = '376644ab507d99d198c5aadb70cc1052d58c3ff8';
+const KOBO_BASE   = 'https://kf.kobotoolbox.org';
+const PAGE_SIZE   = 3000;
 
-/* ── Demographic field candidates (in priority order) ── */
-const DEMO_FIELD_CANDIDATES = {
-  facility:    ['facility','facility_type','type_of_facility','Facility','Facility_Type','fac_type','facility_name_type'],
-  district:    ['district','district_name','District','dist'],
-  block:       ['block','block_name','Block','taluka'],
-  sector:      ['sector','sector_name','facility_name','Sector','sub_facility','sub_sector','Sub_sector','name_of_facility'],
-  date:        ['date','today','Date','supervision_date','visit_date','_submission_time'],
-  coordinator: ['coordinator','block_coordinator','Coordinator','supervisor_name','supervisor','field_officer'],
-};
-
-const INDICATOR_FIELDS = [
-  'A1','A2_exp','A2_buf','A3_stk','A4','A5','A5b',
-  'A6','A7','A8','A9',
-  'ACC1','ACC2','ACC3','ACC5','ACC6','ACC7',
-  'D1','D2','D3','D4','D5','D6','D7',
-  'B11','B12','E4a','E5'
-];
-const NUMERIC_FIELDS = [
-  'vhsnd_B1','vhsnd_B2','vhsnd_B3','vhsnd_B4','vhsnd_B5',
-  'hwc_B1','hwc_B2','hwc_B3',
-  'phc_B1','phc_B3',
-  'pmsma_B1','pmsma_B11'
-];
-
-/* ── Targets (programme targets) ── */
 const TARGETS = { hwc:78, vhsnd:72, phc_pmsma:78, meetings:78, mos:132 };
 const COORD_TARGETS = {
   hwc:[16,32,10,14,6], vhsnd:[14,28,8,12,10],
   phc_pmsma:[16,32,10,14,6], meetings:[16,16,16,16,14], mos:[26,28,24,28,26]
 };
+const COORDS = ['Rohit Kharel','Mayuri Kurmi','Dilip Pariga','Aditi Saikia','Madhushri Dutta'];
+const COORD_COLORS = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b','#198754'];
+const FAC_COLORS   = {'HWC':'#1f7cd5','VHSND':'#00b69b','PHC':'#6f42c1','PMSMA site':'#f59e0b'};
 
-/* ── Live state ── */
-let RAW_DATA = [];
-let COORDS = [];
-let fieldDetectionMap = JSON.parse(localStorage.getItem('kobo_field_map') || 'null');
-let filters = { validation:[], facility:[], block:[], coord:[], district:[] };
-let dateFrom = '', dateTo = '';
-
-/* ═══════════════════════════════════════════════
-   UI HELPERS
-═══════════════════════════════════════════════ */
-function showLoading(show, msg='Loading…') {
-  const el = document.getElementById('loadingOverlay');
-  document.getElementById('loadingText').textContent = msg;
-  el.classList.toggle('active', show);
-  const btn = document.getElementById('refreshBtn');
-  const icon = document.getElementById('refreshIcon');
-  btn.disabled = show;
-  icon.className = show ? 'spin' : '';
-  icon.textContent = '↻';
+/* ═══════════════════════════════════════════════════════════
+   FIELD MAPPER — handles both KoboToolbox JSON field names
+   (snake_case or label style) and our normalized names
+═══════════════════════════════════════════════════════════ */
+function findKey(obj, patterns) {
+  const keys = Object.keys(obj);
+  for (const p of patterns) {
+    // exact match
+    if (obj[p] !== undefined) return obj[p];
+    // case-insensitive
+    const hit = keys.find(k => k.toLowerCase() === p.toLowerCase());
+    if (hit) return obj[hit];
+    // partial (strip non-alphanumeric)
+    const pn = p.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const ph = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g,'').includes(pn));
+    if (ph) return obj[ph];
+  }
+  return undefined;
 }
 
-function showTokenModal() {
-  document.getElementById('tokenInput').value = koboApiToken;
-  document.getElementById('uidInput').value = KOBO_ASSET_UID;
-  document.getElementById('tokenModal').classList.add('active');
+function yn(val) {
+  if (val === null || val === undefined) return null;
+  const s = String(val).toLowerCase().trim();
+  return s === 'yes' || s === '1' || s === 'true' ? 1 :
+         s === 'no'  || s === '0' || s === 'false' ? 0 : null;
+}
+function num(val) {
+  const n = parseFloat(val);
+  return isNaN(n) ? 0 : n;
 }
 
-function closeModal() {
-  document.getElementById('tokenModal').classList.remove('active');
-}
-
-function showError(msg) {
-  const el = document.getElementById('errorBanner');
-  el.textContent = '⚠ ' + msg;
-  el.classList.add('active');
-  setTimeout(() => el.classList.remove('active'), 8000);
-}
-
-function saveAndConnect() {
-  const token = document.getElementById('tokenInput').value.trim();
-  const uid = document.getElementById('uidInput').value.trim();
-  if (!token) { alert('Please enter your API token.'); return; }
-  koboApiToken = token;
-  KOBO_ASSET_UID = uid;
-  localStorage.setItem('kobo_api_token', token);
-  localStorage.setItem('kobo_asset_uid', uid);
-  closeModal();
-  fieldDetectionMap = null; // Force re-detect with new form
-  localStorage.removeItem('kobo_field_map');
-  loadKoboData();
-}
-
-/* ═══════════════════════════════════════════════
-   KOBO DATA FETCHING
-═══════════════════════════════════════════════ */
-async function fetchAllKoboData(token) {
-  const headers = { 'Authorization': `Token ${token}` };
-  let url = `${KOBO_BASE_URL}/api/v2/assets/${KOBO_ASSET_UID}/data/?format=json&limit=3000`;
-  let allResults = [];
-  let page = 0;
-
-  while (url) {
-    page++;
-    showLoading(true, `Fetching from KoboToolbox… (page ${page})`);
-    const res = await fetch(url, { headers });
-    if (res.status === 401) throw new Error('Invalid API token. Please check your token and try again.');
-    if (res.status === 403) throw new Error('Access denied. You may not have permission to access this form.');
-    if (res.status === 404) throw new Error('Form not found. Please check the Asset UID.');
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`API error ${res.status}. ${body.substring(0,200)}`);
-    }
-    const data = await res.json();
-    const results = data.results || [];
-    allResults = allResults.concat(results);
-    url = data.next || null; // Follow pagination
-  }
-  return allResults;
-}
-
-/* ═══════════════════════════════════════════════
-   FIELD AUTO-DETECTION
-═══════════════════════════════════════════════ */
-function buildStripMap(sampleRecord) {
-  const strippedToOriginal = {};
-  for (const k of Object.keys(sampleRecord)) {
-    const stripped = k.includes('/') ? k.split('/').pop() : k;
-    strippedToOriginal[stripped] = k;
-    strippedToOriginal[stripped.toLowerCase()] = k;
-    strippedToOriginal[stripped.toUpperCase()] = k;
-  }
-  return strippedToOriginal;
-}
-
-function detectFieldMap(sampleRecord) {
-  const sm = buildStripMap(sampleRecord);
-  const map = {};
-
-  // Detect demographic fields
-  for (const [field, candidates] of Object.entries(DEMO_FIELD_CANDIDATES)) {
-    for (const cand of candidates) {
-      const found = sm[cand] || sm[cand.toLowerCase()] || sm[cand.toUpperCase()];
-      if (found !== undefined) { map[field] = found; break; }
-    }
+function mapRecord(r) {
+  // Validation status: Kobo returns object {uid, label} or string
+  let validation = '-';
+  const vs = r['_validation_status'];
+  if (vs) {
+    if (typeof vs === 'object' && vs.label) validation = vs.label;
+    else if (typeof vs === 'object' && vs.uid)
+      validation = vs.uid.replace('validation_status_','').replace(/_/g,' ')
+        .replace(/\b\w/g,c=>c.toUpperCase());
+    else if (typeof vs === 'string' && vs.trim()) validation = vs.trim();
   }
 
-  // Detect indicator & numeric fields
-  for (const field of [...INDICATOR_FIELDS, ...NUMERIC_FIELDS]) {
-    if (sm[field] !== undefined) { map[field] = sm[field]; continue; }
-    // A2_exp → A2exp
-    const noUnderscore = field.replace(/_/g,'');
-    if (sm[noUnderscore] !== undefined) { map[field] = sm[noUnderscore]; continue; }
-    // Also try lowercase
-    if (sm[field.toLowerCase()] !== undefined) { map[field] = sm[field.toLowerCase()]; }
-  }
+  // Date: prefer visit date, fall back to submission time
+  let date = '';
+  const dv = findKey(r,['Date of visit / event','Date_of_visit_event','date_of_visit','visit_date','_submission_time']);
+  if (dv) date = String(dv).split('T')[0].split(' ')[0];
 
-  // Always capture _validation_status
-  if (sampleRecord['_validation_status'] !== undefined) {
-    map['_validation_status'] = '_validation_status';
-  }
-
-  return map;
-}
-
-/* ═══════════════════════════════════════════════
-   RECORD TRANSFORMATION
-═══════════════════════════════════════════════ */
-function transformRecord(raw, fmap) {
-  const get = key => {
-    const mk = fmap[key];
-    if (!mk) return null;
-    const v = raw[mk];
-    return (v === undefined || v === '') ? null : v;
-  };
-
-  const toNum = v => {
-    if (v === null || v === undefined || v === '' || v === 'n/a' || v === 'N/A') return null;
-    const n = parseFloat(v);
-    return isNaN(n) ? null : n;
-  };
-
-  const toYN = v => {
-    if (v === null || v === undefined) return null;
-    if (typeof v === 'number') return v === 1 ? 1 : (v === 0 ? 0 : null);
-    const s = String(v).toLowerCase().trim();
-    if (s === '1' || s === 'yes' || s === 'true' || s === 'हाँ' || s === 'yes_1') return 1;
-    if (s === '0' || s === 'no' || s === 'false' || s === 'नहीं' || s === 'no_0') return 0;
-    return null;
-  };
-
-  // Validation status can be an object from KoboToolbox
-  let validation = get('_validation_status') || raw['_validation_status'];
-  if (validation && typeof validation === 'object') {
-    validation = validation.label || 'Not Approved';
-  }
-  if (!validation || validation === '' || validation === 'null') validation = 'Not Approved';
-
-  // Parse date safely
-  let dateStr = '';
-  const rawDate = get('date');
-  if (rawDate) {
-    try { dateStr = new Date(rawDate).toISOString().substring(0,10); }
-    catch(e) { dateStr = String(rawDate).substring(0,10); }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) dateStr = '';
-  }
-  // Fallback to submission time
-  if (!dateStr && raw['_submission_time']) {
-    try { dateStr = new Date(raw['_submission_time']).toISOString().substring(0,10); }
-    catch(e) {}
-  }
+  // Coordinator: normalise case/spacing
+  let coord = String(findKey(r,[
+    'Name of Block Coordinator','Name_of_Block_Coordinator',
+    'block_coordinator','coordinator','Name_Block_Coordinator'
+  ])||'').trim();
+  // Fuzzy match to known coordinators
+  const cm = COORDS.find(c => c.toLowerCase().replace(/\s/g,'') === coord.toLowerCase().replace(/\s/g,''));
+  if (cm) coord = cm;
 
   return {
-    facility:    String(get('facility') || 'HWC').trim(),
-    district:    String(get('district') || '').trim(),
-    block:       String(get('block') || '').trim(),
-    sector:      String(get('sector') || '').trim(),
-    date:        dateStr,
-    coordinator: String(get('coordinator') || '').trim(),
-    validation:  String(validation).trim(),
-    _kobo_id:    raw['_id'],
-
-    A1:toYN(get('A1')), A2_exp:toYN(get('A2_exp')), A2_buf:toYN(get('A2_buf')),
-    A3_stk:toYN(get('A3_stk')), A4:toYN(get('A4')), A5:toYN(get('A5')),
-    A5b:toYN(get('A5b')), A6:toYN(get('A6')), A7:toYN(get('A7')),
-    A8:toYN(get('A8')), A9:toYN(get('A9')),
-    ACC1:toYN(get('ACC1')), ACC2:toYN(get('ACC2')), ACC3:toYN(get('ACC3')),
-    ACC5:toYN(get('ACC5')), ACC6:toYN(get('ACC6')), ACC7:toYN(get('ACC7')),
-    D1:toYN(get('D1')), D2:toYN(get('D2')), D3:toYN(get('D3')),
-    D4:toYN(get('D4')), D5:toYN(get('D5')), D6:toYN(get('D6')), D7:toYN(get('D7')),
-    B11:toYN(get('B11')), B12:toYN(get('B12')), E4a:toYN(get('E4a')), E5:toYN(get('E5')),
-
-    vhsnd_B1:toNum(get('vhsnd_B1'))||0, vhsnd_B2:toNum(get('vhsnd_B2'))||0,
-    vhsnd_B3:toNum(get('vhsnd_B3'))||0, vhsnd_B4:toNum(get('vhsnd_B4'))||0,
-    vhsnd_B5:toNum(get('vhsnd_B5'))||0,
-    hwc_B1:toNum(get('hwc_B1'))||0, hwc_B2:toNum(get('hwc_B2'))||0,
-    hwc_B3:toNum(get('hwc_B3'))||0,
-    phc_B1:toNum(get('phc_B1'))||0, phc_B3:toNum(get('phc_B3'))||0,
-    pmsma_B1:toNum(get('pmsma_B1'))||0, pmsma_B11:toNum(get('pmsma_B11'))||0,
+    _id: r['_id'],
+    facility:    String(findKey(r,['Facility type?','Facility_type','facility_type'])||'').trim() || 'Unknown',
+    district:    String(findKey(r,['District','district'])||'').trim(),
+    block:       String(findKey(r,['Block','block'])||'').trim() || 'Unknown',
+    sector:      String(findKey(r,['Sector / Sector Name','Sector_Sector_Name','sector'])||'').trim(),
+    date,
+    coordinator: coord || 'Unknown',
+    validation,
+    // Supplies
+    A1:       yn(findKey(r,['A.1 Dual HIV\u2013Syphilis RDT kits available?','A_1_Dual_HIV','A1_RDT','A_1'])),
+    A2_exp:   yn(findKey(r,['A.2 Kits within expiry date?','A_2_Kits_within_expiry','A2_exp','A_2_expiry'])),
+    A2_buf:   yn(findKey(r,['A.2 Buffer stock maintained as per norms?','A_2_Buffer_stock','A2_buf','A_2_buffer'])),
+    A3_stk:   yn(findKey(r,['A.3 Any stock-out in the last 3 months?','A_3_Any_stock_out','A3_stk','A_3'])),
+    A4:       yn(findKey(r,['A.4 Gloves, lancets, alcohol swabs available?','A_4_Gloves','A4','A_4'])),
+    A5:       yn(findKey(r,['A.5 Injection benzathine penicillin available?','A_5_Injection','A5','A_5'])),
+    A5b:      yn(findKey(r,['A.5b ARV prophylaxis','A_5b_ARV','A5b','A_5b'])),
+    A6:       yn(findKey(r,['A.6 Refrigerator available & functional?','A_6_Refrigerator','A6','A_6'])),
+    A7:       yn(findKey(r,['A.7 Functional electricity backup','A_7_Functional_electricity','A7','A_7'])),
+    A8:       yn(findKey(r,['A.8 Referral slips available?','A_8_Referral_slips','A8','A_8'])),
+    A9:       yn(findKey(r,['A.9 IEC materials displayed','A_9_IEC','A9','A_9'])),
+    // Cold chain
+    ACC1:     yn(findKey(r,['A\u2011CC.1 Refrigerator available & functional for RDT kits?','A_CC_1','ACC1','A_CC1'])),
+    ACC2:     yn(findKey(r,['A\u2011CC.2 Temp maintained','A_CC_2','ACC2','A_CC2'])),
+    ACC3:     yn(findKey(r,['A\u2011CC.3 Temperature chart updated','A_CC_3','ACC3','A_CC3'])),
+    ACC5:     yn(findKey(r,['A\u2011CC.5 Power backup','A_CC_5','ACC5','A_CC5'])),
+    ACC6:     yn(findKey(r,['A\u2011CC.6 Medicine fridge properly used','A_CC_6','ACC6','A_CC6'])),
+    ACC7:     yn(findKey(r,['A\u2011CC.7 Thermometer available','A_CC_7','ACC7','A_CC7'])),
+    // Training
+    D1:       yn(findKey(r,['D.1 MO aware of EVTHS guidelines','D_1_MO_aware','D1','D_1'])),
+    D2:       yn(findKey(r,['D.2 CHO trained on rapid dual','D_2_CHO','D2','D_2'])),
+    D3:       yn(findKey(r,['D.3 ANM/MPW/Staff Nurse trained','D_3_ANM','D3','D_3'])),
+    D4:       yn(findKey(r,['D.4 Lab Technician trained','D_4_Lab','D4','D_4'])),
+    D5:       yn(findKey(r,['D.5 Awareness of needle','D_5_Awareness','D5','D_5'])),
+    D6:       yn(findKey(r,['D.6 Referral pathways','D_6_Referral','D6','D_6'])),
+    D7:       yn(findKey(r,['D.7 ANM/ASHA involved','D_7_ANM','D7','D_7'])),
+    // Clinical
+    B11:      yn(findKey(r,['B.11 MCP card updated','B_11_MCP','B11','B_11'])),
+    B12:      yn(findKey(r,['B.12 BMW segregated','B_12_BMW','B12','B_12'])),
+    E4a:      yn(findKey(r,['E.4a Do they record testing','E_4a','E4a','E_4a'])),
+    E5:       yn(findKey(r,['E.5 Clear referral linkage with ART','E_5_Clear_referral','E5','E_5'])),
+    // Outcome numerics
+    vhsnd_B1: num(findKey(r,['B.1 Total number of PW attending VHSND','B_1_Total_PW_attending_VHSND','vhsnd_B1'])),
+    vhsnd_B2: num(findKey(r,['B.2 Number of PW counselled for screening','B_2_Number_of_PW_counselled','vhsnd_B2'])),
+    vhsnd_B3: num(findKey(r,['B.3 Total number of PW screened in last 6 months (VHSND)','B_3_Total_PW_screened_VHSND','vhsnd_B3'])),
+    vhsnd_B4: num(findKey(r,['B.4 Out of above, number screened reactive','B_4_reactive','vhsnd_B4'])),
+    vhsnd_B5: num(findKey(r,['B.5 HIV\u2011reactive PW referred to ICTC','B_5_HIV_reactive','vhsnd_B5'])),
+    hwc_B1:   num(findKey(r,['B.1 Total number of PW registered in last 6 months','B_1_Total_PW_registered','hwc_B1'])),
+    hwc_B2:   num(findKey(r,['B.2 Total number of PW screened in last 6 months','B_2_Total_PW_screened','hwc_B2'])),
+    hwc_B3:   num(findKey(r,['B.3 Out of above, number screened reactive in last 6 months','B_3_reactive','hwc_B3'])),
+    phc_B1:   num(findKey(r,['B.1 Total number of ANC registrations','B_1_Total_ANC','phc_B1'])),
+    phc_B3:   num(findKey(r,['B.3 Total number of PW screened for HIV in last 6 months','B_3_Total_PW_screened_HIV','phc_B3'])),
+    pmsma_B1: num(findKey(r,['B.P1 Total number of PW attending PMSMA','B_P1_Total','pmsma_B1'])),
+    pmsma_B11:num(findKey(r,['B.P1.1 Number of PW screened during PMSMA','B_P1_1','pmsma_B11'])),
   };
 }
 
-/* ═══════════════════════════════════════════════
-   MAIN LOAD FUNCTION
-═══════════════════════════════════════════════ */
-async function loadKoboData() {
-  if (!koboApiToken) { showTokenModal(); return; }
+/* ═══════════════════════════════════════════════════════════
+   DATA FETCH
+═══════════════════════════════════════════════════════════ */
+let ALL_DATA = [];
+let isFetching = false;
 
-  showLoading(true, 'Connecting to KoboToolbox…');
+async function fetchData() {
+  if (isFetching) return;
+  isFetching = true;
+  document.getElementById('refreshBtn').classList.add('loading');
+  document.getElementById('statusDot').className = 'status-dot loading';
+  document.getElementById('lastSync').textContent = 'Fetching…';
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+  document.getElementById('loadingMsg').textContent = 'Fetching live data from KoboToolbox…';
+
   try {
-    const rawRecords = await fetchAllKoboData(koboApiToken);
-    showLoading(true, `Transforming ${rawRecords.length} records…`);
+    let results = [];
+    let url = `${KOBO_BASE}/api/v2/assets/${KOBO_ASSET}/data/?format=json&limit=${PAGE_SIZE}&start=0`;
+    let page = 1;
 
-    if (rawRecords.length === 0) {
-      showLoading(false);
-      showError('No submissions found in this KoboToolbox form.');
-      return;
+    while (url) {
+      document.getElementById('loadingSub').textContent =
+        `Page ${page} — ${results.length} records loaded…`;
+      const resp = await fetch(url, {
+        headers: {
+          'Authorization': `Token ${KOBO_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      const json = await resp.json();
+      results = results.concat(json.results || []);
+      url = json.next || null;
+      page++;
+      // safety: max 20 pages
+      if (page > 20) break;
     }
 
-    // Auto-detect field mapping if not already cached
-    if (!fieldDetectionMap) {
-      fieldDetectionMap = detectFieldMap(rawRecords[0]);
-      localStorage.setItem('kobo_field_map', JSON.stringify(fieldDetectionMap));
-    }
-
-    // Transform all records
-    RAW_DATA = rawRecords.map(r => transformRecord(r, fieldDetectionMap));
-
-    // Derive COORDS list dynamically
-    COORDS = [...new Set(RAW_DATA.map(r => r.coordinator).filter(Boolean))].sort();
+    ALL_DATA = results.map(mapRecord);
+    const now = new Date();
+    document.getElementById('lastSync').textContent =
+      'Live · ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('statusDot').className = 'status-dot';
+    document.getElementById('syncTime').textContent =
+      'Synced ' + now.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+    showToast(`✓ ${ALL_DATA.length} records loaded from KoboToolbox`, 'success');
 
     // Set date range from data
-    const dates = RAW_DATA.map(r => r.date).filter(d => d && d !== 'NaT').sort();
+    const dates = ALL_DATA.map(r=>r.date).filter(Boolean).sort();
     if (dates.length) {
-      dateFrom = dates[0]; dateTo = dates[dates.length-1];
-    } else {
-      const now = new Date();
-      dateTo = now.toISOString().substring(0,10);
-      const m = new Date(now); m.setMonth(m.getMonth()-3);
-      dateFrom = m.toISOString().substring(0,10);
+      document.getElementById('df').value = dates[0];
+      document.getElementById('dt').value = dates[dates.length-1];
     }
-    document.getElementById('date-from').value = dateFrom;
-    document.getElementById('date-to').value = dateTo;
 
-    // Update UI status
-    const statusEl = document.getElementById('koboStatus');
-    statusEl.textContent = `✓ ${rawRecords.length} records`;
-    statusEl.classList.add('connected');
-    document.getElementById('refreshTime').textContent = 'Updated: ' + new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
-
-    showLoading(false);
-    buildFilters();
+    rebuildFilters();
     render();
 
-  } catch(err) {
-    showLoading(false);
-    showError(err.message);
+  } catch (err) {
     console.error('KoboToolbox fetch error:', err);
+    document.getElementById('statusDot').className = 'status-dot error';
+    document.getElementById('lastSync').textContent = 'Fetch failed';
+    showToast('⚠ Could not reach KoboToolbox: ' + err.message +
+      '. Dashboard will retry or use cached data.', 'error');
+    // Keep existing ALL_DATA if we have it
+    if (ALL_DATA.length === 0) {
+      document.getElementById('loadingMsg').textContent = 'Using embedded seed data…';
+      document.getElementById('loadingSub').textContent =
+        'API unreachable — showing last known data';
+      setTimeout(()=>{ document.getElementById('loadingOverlay').classList.add('hidden'); }, 1500);
+    }
+  } finally {
+    isFetching = false;
+    document.getElementById('refreshBtn').classList.remove('loading');
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('recBanner').style.display = 'flex';
   }
 }
 
-/* ═══════════════════════════════════════════════
-   FILTER SETUP
-═══════════════════════════════════════════════ */
-function buildFilters() {
-  // Reset all filter containers
-  ['validation','facility','block','coord','district'].forEach(k => {
-    document.getElementById('filter-'+k).innerHTML = '';
-  });
+/* ═══════════════════════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════════════════════ */
+let filters = { validation:[], facility:[], block:[], coord:[], district:[] };
 
-  const fieldMap = {
-    validation: {field:'validation', key:'validation'},
-    facility:   {field:'facility',   key:'facility'},
-    block:      {field:'block',      key:'block'},
-    coord:      {field:'coord',      key:'coordinator'},
-    district:   {field:'district',   key:'district'},
+function rebuildFilters() {
+  const groups = {
+    validation: [r=>r.validation, 'fv-validation'],
+    facility:   [r=>r.facility,   'fv-facility'],
+    block:      [r=>r.block,      'fv-block'],
+    coord:      [r=>r.coordinator,'fv-coord'],
+    district:   [r=>r.district,   'fv-district'],
   };
-
-  Object.entries(fieldMap).forEach(([filterId, {field, key}]) => {
-    const vals = [...new Set(RAW_DATA.map(r => r[key]).filter(v => v && v !== 'nan'))].sort();
-    const el = document.getElementById('filter-' + filterId);
-    vals.forEach(v => {
-      const cnt = RAW_DATA.filter(r => r[key] === v).length;
+  Object.entries(groups).forEach(([key, [getter, elId]])=>{
+    const el = document.getElementById(elId);
+    const current = filters[key].slice();
+    const counts = {};
+    ALL_DATA.forEach(r=>{ const v=getter(r); if(v) counts[v]=(counts[v]||0)+1; });
+    el.innerHTML = '';
+    Object.entries(counts).sort((a,b)=>b[1]-a[1]).forEach(([v,cnt])=>{
       const d = document.createElement('div');
-      d.className = 'filter-item';
-      d.innerHTML = `<input type="checkbox" id="cb-${field}-${CSS.escape(v)}" data-key="${field}" data-val="${v}">
-        <label for="cb-${field}-${CSS.escape(v)}" style="cursor:pointer;flex:1">${v}</label>
-        <span class="filter-count">${cnt}</span>`;
-      d.querySelector('input').addEventListener('change', e => {
-        if (e.target.checked) { if (!filters[field].includes(v)) filters[field].push(v); }
-        else { filters[field] = filters[field].filter(x => x !== v); }
+      d.className = 'f-item' + (current.includes(v)?' active':'');
+      d.innerHTML = `<input type="checkbox" id="cb-${key}-${btoa(v)}" ${current.includes(v)?'checked':''}><label for="cb-${key}-${btoa(v)}" style="cursor:pointer;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v}</label><span class="f-cnt">${cnt}</span>`;
+      d.querySelector('input').addEventListener('change', e=>{
+        if (e.target.checked) { if(!filters[key].includes(v)) filters[key].push(v); }
+        else filters[key] = filters[key].filter(x=>x!==v);
+        d.classList.toggle('active', e.target.checked);
         render();
       });
       el.appendChild(d);
     });
   });
-
-  document.getElementById('date-from').addEventListener('change', e => { dateFrom = e.target.value; render(); });
-  document.getElementById('date-to').addEventListener('change', e => { dateTo = e.target.value; render(); });
+  document.getElementById('df').addEventListener('change', e=>{render();});
+  document.getElementById('dt').addEventListener('change', e=>{render();});
 }
 
-function clearFilters() {
-  Object.keys(filters).forEach(k => filters[k] = []);
-  document.querySelectorAll('.filter-item input').forEach(cb => cb.checked = false);
-  const dates = RAW_DATA.map(r=>r.date).filter(d=>d).sort();
+function clearFilters(){
+  Object.keys(filters).forEach(k=>filters[k]=[]);
+  document.querySelectorAll('.f-item input').forEach(cb=>{ cb.checked=false; cb.closest('.f-item').classList.remove('active'); });
+  const dates = ALL_DATA.map(r=>r.date).filter(Boolean).sort();
   if (dates.length) {
-    dateFrom = dates[0]; dateTo = dates[dates.length-1];
+    document.getElementById('df').value = dates[0];
+    document.getElementById('dt').value = dates[dates.length-1];
   }
-  document.getElementById('date-from').value = dateFrom;
-  document.getElementById('date-to').value = dateTo;
   render();
 }
 
-/* ─── Filtered data ─── */
-function getData() {
-  return RAW_DATA.filter(r => {
-    if (filters.validation.length && !filters.validation.includes(r.validation)) return false;
-    if (filters.facility.length && !filters.facility.includes(r.facility)) return false;
-    if (filters.block.length && !filters.block.includes(r.block)) return false;
-    if (filters.coord.length && !filters.coord.includes(r.coordinator)) return false;
-    if (filters.district.length && !filters.district.includes(r.district)) return false;
-    if (dateFrom && r.date && r.date < dateFrom) return false;
-    if (dateTo && r.date && r.date > dateTo) return false;
+function getData(){
+  const df = document.getElementById('df').value;
+  const dt = document.getElementById('dt').value;
+  return ALL_DATA.filter(r=>{
+    if(filters.validation.length && !filters.validation.includes(r.validation)) return false;
+    if(filters.facility.length   && !filters.facility.includes(r.facility))     return false;
+    if(filters.block.length      && !filters.block.includes(r.block))           return false;
+    if(filters.coord.length      && !filters.coord.includes(r.coordinator))     return false;
+    if(filters.district.length   && !filters.district.includes(r.district))     return false;
+    if(r.date && df && r.date < df) return false;
+    if(r.date && dt && r.date > dt) return false;
     return true;
   });
 }
 
-/* ═══════════════════════════════════════════════
-   HELPERS (shared by all renderers)
-═══════════════════════════════════════════════ */
-const pct = (yes, total) => total > 0 ? Math.round(yes/total*100) : null;
-const ragClass = p => p===null?'rag-na': p>=80?'rag-green': p>=50?'rag-amber':'rag-red';
-const ragText = p => p===null?'—': p+'%';
-const barColor = p => p===null?'#ccc': p>=80?'#198754': p>=50?'#f59e0b':'#dc3545';
-const pctCell = p => {
-  if (p === null) return '<span class="rag-na">—</span>';
-  return `<span class="${ragClass(p)}">${p}%</span>`;
-};
-
-function yPct(data, col, fac) {
-  const rows = fac ? data.filter(r => r.facility === fac) : data;
-  const valid = rows.filter(r => r[col] !== null);
-  if (!valid.length) return null;
-  return pct(valid.filter(r => r[col] === 1).length, valid.length);
-}
-
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
 const charts = {};
-function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
-function makeChart(id, config) {
-  destroyChart(id);
-  const ctx = document.getElementById(id);
-  if (!ctx) return;
-  charts[id] = new Chart(ctx, config);
+function mkChart(id, cfg){
+  if(charts[id]){ charts[id].destroy(); delete charts[id]; }
+  const c = document.getElementById(id);
+  if(c) charts[id] = new Chart(c, cfg);
 }
 
-/* ═══════════════════════════════════════════════
-   EMPTY STATE (when not connected)
-═══════════════════════════════════════════════ */
-function renderEmptyState(containerId) {
-  document.getElementById(containerId).innerHTML = `
-    <div class="empty-state">
-      <div style="font-size:40px;margin-bottom:16px">📡</div>
-      <h3>No data loaded</h3>
-      <p>Connect to KoboToolbox to load live supervision data.</p>
-      <button class="connect-btn" onclick="showTokenModal()">Connect KoboToolbox</button>
-    </div>`;
+const pct = (y,t) => t>0 ? Math.round(y/t*100) : null;
+const barClr = p => p===null?'#ccc':p>=80?'#198754':p>=50?'#f59e0b':'#dc3545';
+const ragSpan = p => p===null ? '<span class="na">—</span>' :
+  p>=80 ? `<span class="g">${p}%</span>` :
+  p>=50 ? `<span class="a">${p}%</span>` : `<span class="r">${p}%</span>`;
+
+function yPct(data, col, fac){
+  const rows = fac ? data.filter(r=>r.facility===fac||r.facility===fac.replace(' site','')) : data;
+  const valid = rows.filter(r=>r[col]!==null);
+  return valid.length ? pct(valid.filter(r=>r[col]===1).length, valid.length) : null;
 }
 
-/* ═══════════════════════════════════════════════
-   PAGE 1 — TARGET VS ACHIEVEMENT
-═══════════════════════════════════════════════ */
-function renderTVA(data) {
-  if (!data.length) { renderEmptyState('tva-content'); return; }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 5000);
+}
 
-  const hwc   = data.filter(r => r.facility === 'HWC').length;
-  const vhsnd = data.filter(r => r.facility === 'VHSND').length;
-  const phc_p = data.filter(r => r.facility === 'PHC' || r.facility === 'PMSMA site').length;
+/* ═══════════════════════════════════════════════════════════
+   PAGE 1: TARGET VS ACHIEVEMENT
+═══════════════════════════════════════════════════════════ */
+function renderTVA(data){
+  const hwc   = data.filter(r=>r.facility==='HWC').length;
+  const vhsnd = data.filter(r=>r.facility==='VHSND').length;
+  const phcp  = data.filter(r=>r.facility==='PHC'||r.facility==='PMSMA site').length;
+  const achs  = [hwc, vhsnd, phcp, 0, 0];
+  const tgts  = [TARGETS.hwc, TARGETS.vhsnd, TARGETS.phc_pmsma, TARGETS.meetings, TARGETS.mos];
+  const lbls  = ['HWC Monitored','VHSND Monitored','PHC/PMSMA Monitored','Block Meetings','MOs Trained'];
+  const clrs  = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b','#198754'];
+  const accs  = ['blue','teal','purple','amber','green'];
 
-  const achievements = [hwc, vhsnd, phc_p, 0, 0];
-  const targets = [TARGETS.hwc, TARGETS.vhsnd, TARGETS.phc_pmsma, TARGETS.meetings, TARGETS.mos];
-  const labels  = ['HWC Monitored','VHSND Monitored','PHC/PMSMA Monitored','Block Meetings','MOs Trained'];
-  const colors  = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b','#198754'];
-
-  const coordCounts = COORDS.map(c => ({
-    name:  c.split(' ')[0],
-    hwc:   data.filter(r => r.coordinator === c && r.facility === 'HWC').length,
-    vhsnd: data.filter(r => r.coordinator === c && r.facility === 'VHSND').length,
-    phcp:  data.filter(r => r.coordinator === c && (r.facility === 'PHC' || r.facility === 'PMSMA site')).length,
+  const coordData = COORDS.map(c=>({
+    name: c.split(' ')[0],
+    hwc:   data.filter(r=>r.coordinator===c&&r.facility==='HWC').length,
+    vhsnd: data.filter(r=>r.coordinator===c&&r.facility==='VHSND').length,
+    phcp:  data.filter(r=>r.coordinator===c&&(r.facility==='PHC'||r.facility==='PMSMA site')).length,
   }));
 
-  const badges = achievements.map((a, i) => {
-    const p = targets[i] > 0 ? Math.round(a/targets[i]*100) : 0;
-    return {a, t:targets[i], p, cls: p>=80?'good':p>=50?'warn':'bad'};
-  });
-  const cardColors = ['blue','teal','purple','amber','green'];
-
-  let html = `<div class="kpi-row">`;
-  labels.forEach((lbl, i) => {
-    const b = badges[i];
-    html += `<div class="kpi-card ${cardColors[i]}">
-      <div class="kpi-label">${lbl}</div>
-      <div class="kpi-value">${b.a}</div>
-      <div class="kpi-sub">of ${b.t} target</div>
-      <span class="kpi-badge ${b.cls}">${b.p}% achieved</span>
+  let h = '<div class="kpi-row">';
+  achs.forEach((a,i)=>{
+    const p = tgts[i]>0?Math.round(a/tgts[i]*100):0;
+    const bc = p>=80?'good':p>=50?'warn':'bad';
+    h+=`<div class="kpi ${accs[i]}">
+      <div class="kpi-lbl">${lbls[i]}</div>
+      <div class="kpi-val">${a}</div>
+      <div class="kpi-sub">of ${tgts[i]} target</div>
+      <span class="kpi-badge ${bc}">${p}% achieved</span>
     </div>`;
   });
-  html += `</div><div class="progress-section">`;
+  h+='</div><div class="prog-section">';
 
-  labels.forEach((lbl, i) => {
-    const b = badges[i];
-    const w = Math.min(b.p, 100);
-    html += `<div class="prog-row">
-      <div class="prog-header">
+  lbls.forEach((lbl,i)=>{
+    const a=achs[i], t=tgts[i];
+    const p=t>0?Math.round(a/t*100):0, w=Math.min(p,100);
+    h+=`<div class="prog-row">
+      <div class="prog-hdr">
         <div class="prog-title">${lbl}</div>
-        <div class="prog-nums">Achievement: <span>${b.a}</span> &nbsp;|&nbsp; Target: <span>${b.t}</span></div>
+        <div class="prog-nums">Achievement: <b>${a}</b> &nbsp;|&nbsp; Target: <b>${t}</b></div>
       </div>
       <div class="prog-track">
-        <div class="prog-fill" style="width:${w}%;background:${colors[i]}"><span>${b.p}%</span></div>
+        <div class="prog-fill" style="width:${w}%;background:${clrs[i]}"><span>${p}%</span></div>
       </div>`;
-
-    if (i < 3 && COORDS.length) {
-      const ind = ['hwc','vhsnd','phcp'][i];
-      html += `<div class="coord-bars">`;
-      coordCounts.forEach((cc, ci) => {
-        const val = cc[ind];
-        const ctgt = COORDS.length > 1 ? Math.round(COORD_TARGETS[['hwc','vhsnd','phc_pmsma'][i]][ci] || 0) : 0;
-        html += `<div class="coord-bar">
-          <div class="coord-name">${cc.name}</div>
-          <div class="coord-val">${val}</div>
-          <div class="coord-tgt">${ctgt ? 'of '+ctgt : ''}</div>
+    if(i<3){
+      const indKey = ['hwc','vhsnd','phcp'][i];
+      const ctgtArr = [COORD_TARGETS.hwc,COORD_TARGETS.vhsnd,COORD_TARGETS.phc_pmsma][i];
+      h+='<div class="coord-strip">';
+      coordData.forEach((cd,ci)=>{
+        h+=`<div class="coord-cell">
+          <div class="coord-name">${cd.name}</div>
+          <div class="coord-val" style="color:${COORD_COLORS[ci]}">${cd[indKey]}</div>
+          <div class="coord-tgt">of ${ctgtArr[ci]}</div>
         </div>`;
       });
-      html += `</div>`;
+      h+='</div>';
     }
-    html += `</div>`;
+    h+='</div>';
   });
-  html += `</div>`;
+  h+='</div>';
 
-  html += `<div class="chart-grid">
-    <div class="chart-card">
-      <div class="chart-head">Target vs Achievement</div>
-      <div class="chart-sub">All 5 programme indicators</div>
-      <div class="chart-wrap" style="height:260px"><canvas id="c-tva-bar"></canvas></div>
+  h+=`<div class="chart-grid">
+    <div class="cc">
+      <div class="cc-head">Target vs Achievement</div>
+      <div class="cc-sub">All 5 programme indicators — filtered view</div>
+      <div class="cwrap" style="height:260px"><canvas id="cv-tva-bar" role="img" aria-label="Target vs Achievement clustered bar chart"></canvas></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-head">Coordinator-wise Supervision Visits</div>
-      <div class="chart-sub">HWC + VHSND + PHC/PMSMA combined</div>
-      <div class="chart-wrap" style="height:260px"><canvas id="c-tva-coord"></canvas></div>
-      <div class="donut-legend" id="coord-legend"></div>
+    <div class="cc">
+      <div class="cc-head">Coordinator-wise Visits (Ind 1–3)</div>
+      <div class="cc-sub">HWC + VHSND + PHC/PMSMA combined</div>
+      <div class="cwrap" style="height:220px"><canvas id="cv-tva-dnt" role="img" aria-label="Coordinator visits donut chart"></canvas></div>
+      <div class="leg" id="tva-leg"></div>
     </div>
   </div>`;
 
-  document.getElementById('tva-content').innerHTML = html;
+  document.getElementById('c-tva').innerHTML = h;
 
-  makeChart('c-tva-bar', {type:'bar',
-    data:{labels:['HWC','VHSND','PHC/PMSMA','Meetings','MOs'],
-      datasets:[
-        {label:'Target', data:targets, backgroundColor:'rgba(31,124,213,0.15)', borderColor:'#1f7cd5', borderWidth:2},
-        {label:'Achievement', data:achievements, backgroundColor:colors.map(c=>c+'cc'), borderColor:colors, borderWidth:2}
-      ]},
+  mkChart('cv-tva-bar',{type:'bar',data:{
+    labels:['HWC','VHSND','PHC/PMSMA','Meetings','MOs'],
+    datasets:[
+      {label:'Target',data:tgts,backgroundColor:'rgba(31,124,213,.12)',borderColor:'#1f7cd5',borderWidth:2},
+      {label:'Achievement',data:achs,backgroundColor:clrs.map(c=>c+'cc'),borderColor:clrs,borderWidth:2}
+    ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{labels:{font:{size:11}}}},
       scales:{y:{beginAtZero:true,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}}}}
   });
 
-  const coordTotals = coordCounts.map(c => c.hwc + c.vhsnd + c.phcp);
-  const coordColors = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b','#198754'];
-  const legendEl = document.getElementById('coord-legend');
-  if (legendEl) {
-    legendEl.innerHTML = COORDS.map((c, i) =>
-      `<span class="legend-item"><span class="legend-dot" style="background:${coordColors[i%coordColors.length]}"></span>${c.split(' ')[0]}: ${coordTotals[i]}</span>`
-    ).join('');
-  }
-  makeChart('c-tva-coord', {type:'doughnut',
-    data:{labels:COORDS.map(c=>c.split(' ')[0]), datasets:[{data:coordTotals, backgroundColor:COORDS.map((_,i)=>coordColors[i%coordColors.length]), borderWidth:2, borderColor:'#fff'}]},
+  const ctotals = coordData.map(c=>c.hwc+c.vhsnd+c.phcp);
+  document.getElementById('tva-leg').innerHTML = COORDS.map((c,i)=>
+    `<span class="leg-item"><span class="leg-dot" style="background:${COORD_COLORS[i]}"></span>${c.split(' ')[0]}: ${ctotals[i]}</span>`).join('');
+  mkChart('cv-tva-dnt',{type:'doughnut',data:{
+    labels:COORDS.map(c=>c.split(' ')[0]),
+    datasets:[{data:ctotals,backgroundColor:COORD_COLORS,borderWidth:2,borderColor:'#fff'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}
   });
 }
 
-/* ═══════════════════════════════════════════════
-   PAGE 2 — INFOGRAPHICS
-═══════════════════════════════════════════════ */
-function renderInfographics(data) {
-  if (!data.length) { renderEmptyState('infographics-content'); return; }
-
+/* ═══════════════════════════════════════════════════════════
+   PAGE 2: INFOGRAPHICS
+═══════════════════════════════════════════════════════════ */
+function renderInfo(data){
   const total = data.length;
-  const byFac = {HWC:0,VHSND:0,PHC:0,'PMSMA site':0};
-  data.forEach(r => { if (byFac[r.facility] !== undefined) byFac[r.facility]++; });
+  const facCnts = {};
+  data.forEach(r=>{ facCnts[r.facility]=(facCnts[r.facility]||0)+1; });
+  const pwScr = data.reduce((s,r)=>s+(r.vhsnd_B3||0)+(r.hwc_B2||0)+(r.phc_B3||0)+(r.pmsma_B11||0),0);
 
-  const pwScr = data.reduce((s,r) => s+(r.vhsnd_B3||0)+(r.hwc_B2||0)+(r.phc_B3||0)+(r.pmsma_B11||0), 0);
-
-  let html = `<div class="kpi-row">
-    <div class="kpi-card blue"><div class="kpi-label">Total Facilities</div><div class="kpi-value">${total}</div><div class="kpi-sub">Supervision visits</div></div>
-    <div class="kpi-card teal"><div class="kpi-label">HWC</div><div class="kpi-value">${byFac.HWC}</div><div class="kpi-sub">Health & Wellness Centres</div></div>
-    <div class="kpi-card amber"><div class="kpi-label">VHSND</div><div class="kpi-value">${byFac.VHSND}</div><div class="kpi-sub">Village Health & Nutrition Days</div></div>
-    <div class="kpi-card purple"><div class="kpi-label">PHC</div><div class="kpi-value">${byFac.PHC}</div><div class="kpi-sub">Primary Health Centres</div></div>
-    <div class="kpi-card green"><div class="kpi-label">PMSMA</div><div class="kpi-value">${byFac['PMSMA site']}</div><div class="kpi-sub">PMSMA Sites</div></div>
-    <div class="kpi-card red"><div class="kpi-label">PW Screened</div><div class="kpi-value">${pwScr}</div><div class="kpi-sub">Across all programmes</div></div>
+  let h = `<div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${total}</div><div class="kpi-sub">Supervision records</div></div>
+    <div class="kpi teal"><div class="kpi-lbl">HWC</div><div class="kpi-val">${facCnts['HWC']||0}</div></div>
+    <div class="kpi amber"><div class="kpi-lbl">VHSND</div><div class="kpi-val">${facCnts['VHSND']||0}</div></div>
+    <div class="kpi purple"><div class="kpi-lbl">PHC</div><div class="kpi-val">${facCnts['PHC']||0}</div></div>
+    <div class="kpi green"><div class="kpi-lbl">PMSMA</div><div class="kpi-val">${facCnts['PMSMA site']||0}</div></div>
+    <div class="kpi red"><div class="kpi-lbl">PW Screened</div><div class="kpi-val">${pwScr}</div></div>
   </div>`;
 
-  const compKPIs = [
-    ['RDT Kits Available','A1'],['Referral Slips','A8'],['IEC Materials','A9'],
-    ['MCP Card Updated','B11'],['ANM Trained (RDT)','D3'],['ART Linkage','E5'],
-  ];
-  html += `<div class="kpi-row">`;
-  compKPIs.forEach(([lbl, col]) => {
-    const p = yPct(data, col, null);
-    const cls = p===null?'kpi-card': `kpi-card ${p>=80?'green':p>=50?'amber':'red'}`;
-    html += `<div class="${cls}" style="${p===null?'background:#fff;border:1px solid #e1dfdd;border-radius:6px;padding:14px 16px':''}">
-      <div class="kpi-label" style="font-size:10.5px">${lbl}</div>
-      <div class="kpi-value" style="font-size:22px">${p!==null?p+'%':'—'}</div>
-      <div class="kpi-sub">Overall compliance</div>
-    </div>`;
+  // Compliance snap KPIs
+  const snap = [['RDT Kits','A1'],['Referral Slips','A8'],['IEC Materials','A9'],
+    ['MCP Card','B11'],['ANM Trained','D3'],['ART Linkage','E5']];
+  h += '<div class="kpi-row">';
+  snap.forEach(([lbl,col])=>{
+    const p = yPct(data,col,null);
+    const ac = p===null?'navy':p>=80?'green':p>=50?'amber':'red';
+    h+=`<div class="kpi ${ac}"><div class="kpi-lbl">${lbl}</div><div class="kpi-val">${p!==null?p+'%':'—'}</div><div class="kpi-sub">Compliance</div></div>`;
   });
-  html += `</div>`;
+  h += '</div>';
 
-  html += `<div class="chart-grid">
-    <div class="chart-card">
-      <div class="chart-head">Visits by Facility Type</div>
-      <div class="chart-sub">Distribution of supervision visits</div>
-      <div class="chart-wrap" style="height:240px"><canvas id="c-inf-fac"></canvas></div>
-      <div class="donut-legend" id="fac-legend"></div>
+  h+=`<div class="chart-grid">
+    <div class="cc"><div class="cc-head">Visits by Facility Type</div><div class="cc-sub">Supervision coverage breakdown</div>
+      <div class="cwrap" style="height:220px"><canvas id="cv-inf-fac" role="img" aria-label="Facility type distribution donut"></canvas></div>
+      <div class="leg" id="inf-fac-leg"></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-head">Visits by Block</div>
-      <div class="chart-sub">Block-wise supervision coverage</div>
-      <div class="chart-wrap" style="height:240px"><canvas id="c-inf-block"></canvas></div>
+    <div class="cc"><div class="cc-head">Visits by Block</div><div class="cc-sub">Coverage across all blocks</div>
+      <div class="cwrap" style="height:220px"><canvas id="cv-inf-blk" role="img" aria-label="Block-wise visits bar chart"></canvas></div>
     </div>
-  </div>`;
-
-  html += `<div class="chart-grid">
-    <div class="chart-card">
-      <div class="chart-head">Supplies Compliance by Facility</div>
-      <div class="chart-sub">A.1 RDT kits · A.4 Consumables · A.8 Referrals · A.9 IEC</div>
-      <div class="chart-wrap" style="height:280px"><canvas id="c-inf-supply"></canvas></div>
+  </div>
+  <div class="chart-grid">
+    <div class="cc"><div class="cc-head">Supplies Compliance by Facility</div><div class="cc-sub">A.1 · A.4 · A.8 · A.9 indicators</div>
+      <div class="cwrap" style="height:270px"><canvas id="cv-inf-sup" role="img" aria-label="Supplies compliance radar"></canvas></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-head">Training Compliance by Coordinator</div>
-      <div class="chart-sub">D.3 ANM trained · D.5 PEP · D.6 Referrals · D.7 ANC tracking</div>
-      <div class="chart-wrap" style="height:280px"><canvas id="c-inf-train"></canvas></div>
+    <div class="cc"><div class="cc-head">Training Compliance by Coordinator</div><div class="cc-sub">D.3 · D.5 · D.6 · D.7 grouped</div>
+      <div class="cwrap" style="height:270px"><canvas id="cv-inf-trn" role="img" aria-label="Training compliance grouped bar"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid full">
+    <div class="cc"><div class="cc-head">Supervision Activity Over Time</div><div class="cc-sub">Weekly visit count trend</div>
+      <div class="cwrap" style="height:200px"><canvas id="cv-inf-trd" role="img" aria-label="Weekly supervision trend line chart"></canvas></div>
     </div>
   </div>`;
 
-  html += `<div class="chart-grid full">
-    <div class="chart-card">
-      <div class="chart-head">Supervision Activity Over Time</div>
-      <div class="chart-sub">Number of supervision visits per week</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="c-inf-trend"></canvas></div>
-    </div>
-  </div>`;
+  document.getElementById('c-info').innerHTML = h;
 
-  document.getElementById('infographics-content').innerHTML = html;
-
-  const facColors = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b'];
-  const facLabels = ['HWC','VHSND','PHC','PMSMA'];
-  const facVals = [byFac.HWC, byFac.VHSND, byFac.PHC, byFac['PMSMA site']];
-  document.getElementById('fac-legend').innerHTML = facLabels.map((l,i) =>
-    `<span class="legend-item"><span class="legend-dot" style="background:${facColors[i]}"></span>${l}: ${facVals[i]}</span>`).join('');
-  makeChart('c-inf-fac', {type:'doughnut', data:{labels:facLabels,datasets:[{data:facVals,backgroundColor:facColors,borderWidth:2,borderColor:'#fff'}]},
+  const facL=['HWC','VHSND','PHC','PMSMA site'];
+  const facC=['#1f7cd5','#00b69b','#6f42c1','#f59e0b'];
+  const facV=facL.map(f=>facCnts[f]||0);
+  document.getElementById('inf-fac-leg').innerHTML=facL.map((l,i)=>
+    `<span class="leg-item"><span class="leg-dot" style="background:${facC[i]}"></span>${l}: ${facV[i]}</span>`).join('');
+  mkChart('cv-inf-fac',{type:'doughnut',data:{labels:facL,datasets:[{data:facV,backgroundColor:facC,borderWidth:2,borderColor:'#fff'}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'55%'}});
 
-  const blockCounts = {};
-  data.forEach(r => { blockCounts[r.block] = (blockCounts[r.block]||0)+1; });
-  const bLabels = Object.keys(blockCounts).filter(b=>b).sort((a,b) => blockCounts[b]-blockCounts[a]);
-  const blockH = Math.max(200, bLabels.length * 24 + 60);
-  document.querySelector('#c-inf-block')?.parentElement && (document.querySelector('#c-inf-block').parentElement.style.height = blockH+'px');
-  makeChart('c-inf-block', {type:'bar', data:{labels:bLabels,datasets:[{label:'Visits',data:bLabels.map(b=>blockCounts[b]),backgroundColor:'#1f7cd5cc',borderColor:'#1f7cd5',borderWidth:1}]},
+  const blkCnts={};
+  data.forEach(r=>{ blkCnts[r.block]=(blkCnts[r.block]||0)+1; });
+  const blkL=Object.keys(blkCnts).sort((a,b)=>blkCnts[b]-blkCnts[a]);
+  mkChart('cv-inf-blk',{type:'bar',data:{labels:blkL,datasets:[{label:'Visits',data:blkL.map(b=>blkCnts[b]),backgroundColor:'#1f7cd5cc',borderColor:'#1f7cd5',borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},
       scales:{x:{beginAtZero:true,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
 
-  const supCols = ['A1','A2_exp','A4','A8','A9'];
-  const supLabels = ['RDT Kits','Expiry OK','Consumables','Referral Slips','IEC Materials'];
-  const facs = ['HWC','VHSND','PHC','PMSMA site'];
-  const facRGB = ['31,124,213','0,182,155','111,66,193','245,158,11'];
-  makeChart('c-inf-supply', {type:'radar',
-    data:{labels:supLabels, datasets:facs.map((fac,i) => ({
-      label:fac, data:supCols.map(col => yPct(data,col,fac)||0),
-      borderColor:`rgb(${facRGB[i]})`, backgroundColor:`rgba(${facRGB[i]},0.1)`, borderWidth:2, pointRadius:3
-    }))},
+  const supCols=['A1','A2_exp','A4','A8','A9'],supLbls=['RDT Kits','Expiry OK','Consumables','Referral Slips','IEC'];
+  mkChart('cv-inf-sup',{type:'radar',data:{labels:supLbls,datasets:facL.map((fac,i)=>({
+    label:fac,data:supCols.map(col=>yPct(data,col,fac)||0),
+    borderColor:facC[i],backgroundColor:facC[i]+'22',borderWidth:2,pointRadius:3
+  }))},
     options:{responsive:true,maintainAspectRatio:false,
       scales:{r:{beginAtZero:true,max:100,ticks:{font:{size:9},stepSize:25},pointLabels:{font:{size:10}}}},
       plugins:{legend:{labels:{font:{size:10}}}}}});
 
-  const trainCols = ['D3','D5','D6','D7'];
-  const trainLabels = ['D.3 ANM','D.5 PEP','D.6 Referrals','D.7 ANC'];
-  const coordColors2 = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b','#198754','#dc3545','#fd7e14'];
-  makeChart('c-inf-train', {type:'bar',
-    data:{labels:trainLabels, datasets:COORDS.map((c,i) => ({
-      label:c.split(' ')[0],
-      data:trainCols.map(col => {
-        const rows = data.filter(r => r.coordinator === c);
-        const valid = rows.filter(r => r[col] !== null);
-        return valid.length ? Math.round(valid.filter(r=>r[col]===1).length/valid.length*100) : 0;
-      }),
-      backgroundColor:coordColors2[i%coordColors2.length]+'cc',
-      borderColor:coordColors2[i%coordColors2.length], borderWidth:2
-    }))},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{font:{size:10}}}},
+  const trnCols=['D3','D5','D6','D7'],trnLbls=['D.3 ANM','D.5 PEP','D.6 Referrals','D.7 ANC'];
+  mkChart('cv-inf-trn',{type:'bar',data:{labels:trnLbls,datasets:COORDS.map((c,i)=>({
+    label:c.split(' ')[0],
+    data:trnCols.map(col=>{const rows=data.filter(r=>r.coordinator===c);const vd=rows.filter(r=>r[col]!==null);return vd.length?Math.round(vd.filter(r=>r[col]===1).length/vd.length*100):0;}),
+    backgroundColor:COORD_COLORS[i]+'cc',borderColor:COORD_COLORS[i],borderWidth:2
+  }))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10}}}},
       scales:{y:{beginAtZero:true,max:100,ticks:{font:{size:10},callback:v=>v+'%'}},x:{ticks:{font:{size:10}}}}}});
 
-  const weekCounts = {};
-  data.forEach(r => {
-    if (!r.date) return;
-    try {
-      const d = new Date(r.date);
-      const mon = new Date(d); mon.setDate(d.getDate()-d.getDay()+1);
-      const wk = mon.toISOString().split('T')[0];
-      weekCounts[wk] = (weekCounts[wk]||0)+1;
-    } catch(e){}
+  const wkC={};
+  data.forEach(r=>{
+    if(!r.date||r.date==='NaT'||r.date==='nan') return;
+    const d=new Date(r.date); if(isNaN(d)) return;
+    const mon=new Date(d); mon.setDate(d.getDate()-d.getDay()+1);
+    const wk=mon.toISOString().split('T')[0];
+    wkC[wk]=(wkC[wk]||0)+1;
   });
-  const wkLabels = Object.keys(weekCounts).sort();
-  makeChart('c-inf-trend', {type:'line',
-    data:{labels:wkLabels, datasets:[{label:'Visits',data:wkLabels.map(w=>weekCounts[w]),
-      borderColor:'#1f7cd5',backgroundColor:'rgba(31,124,213,0.1)',fill:true,tension:0.3,pointRadius:4}]},
+  const wkL=Object.keys(wkC).sort();
+  mkChart('cv-inf-trd',{type:'line',data:{labels:wkL,datasets:[{label:'Visits per week',data:wkL.map(w=>wkC[w]),
+    borderColor:'#1f7cd5',backgroundColor:'rgba(31,124,213,.1)',fill:true,tension:0.35,pointRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}});
+      scales:{x:{ticks:{font:{size:9},maxRotation:45,autoSkip:false}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}});
 }
 
-/* ═══════════════════════════════════════════════
-   PAGE 3 — PROGRAMME DASHBOARD
-═══════════════════════════════════════════════ */
-function renderDashboard(data) {
-  if (!data.length) { renderEmptyState('dashboard-content'); return; }
+/* ═══════════════════════════════════════════════════════════
+   PAGE 3: PROGRAMME DASHBOARD
+═══════════════════════════════════════════════════════════ */
+function renderDash(data){
+  const total=data.length;
+  const fc={HWC:0,VHSND:0,PHC:0,PMSMA:0};
+  data.forEach(r=>{
+    if(r.facility==='HWC') fc.HWC++;
+    else if(r.facility==='VHSND') fc.VHSND++;
+    else if(r.facility==='PHC') fc.PHC++;
+    else if(r.facility==='PMSMA site') fc.PMSMA++;
+  });
 
-  const total = data.length;
-  const byFac = {
-    HWC: data.filter(r=>r.facility==='HWC').length,
-    VHSND: data.filter(r=>r.facility==='VHSND').length,
-    PHC: data.filter(r=>r.facility==='PHC').length,
-    PMSMA: data.filter(r=>r.facility==='PMSMA site').length,
-  };
-
-  let html = `<div class="kpi-row">
-    <div class="kpi-card blue"><div class="kpi-label">Total Visits</div><div class="kpi-value">${total}</div><div class="kpi-sub">Filtered records</div></div>
-    <div class="kpi-card teal"><div class="kpi-label">HWC</div><div class="kpi-value">${byFac.HWC}</div></div>
-    <div class="kpi-card amber"><div class="kpi-label">VHSND</div><div class="kpi-value">${byFac.VHSND}</div></div>
-    <div class="kpi-card purple"><div class="kpi-label">PHC</div><div class="kpi-value">${byFac.PHC}</div></div>
-    <div class="kpi-card green"><div class="kpi-label">PMSMA</div><div class="kpi-value">${byFac.PMSMA}</div></div>
+  let h=`<div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${total}</div></div>
+    <div class="kpi teal"><div class="kpi-lbl">HWC</div><div class="kpi-val">${fc.HWC}</div></div>
+    <div class="kpi amber"><div class="kpi-lbl">VHSND</div><div class="kpi-val">${fc.VHSND}</div></div>
+    <div class="kpi purple"><div class="kpi-lbl">PHC</div><div class="kpi-val">${fc.PHC}</div></div>
+    <div class="kpi green"><div class="kpi-lbl">PMSMA</div><div class="kpi-val">${fc.PMSMA}</div></div>
   </div>`;
 
-  function compTable(title, tag, tagClass, rows) {
-    let t = `<div class="tbl-card">
-      <div class="tbl-head"><span class="section-tag ${tagClass}">${tag}</span>${title}</div>
+  function ctable(title, tag, tagCls, rows){
+    let t=`<div class="tbl-card"><div class="tbl-title"><span class="tag ${tagCls}">${tag}</span>${title}</div>
       <table><thead><tr><th style="width:38%">Indicator</th><th>VHSND</th><th>HWC</th><th>PHC</th><th>PMSMA</th><th>Overall</th></tr></thead><tbody>`;
-    rows.forEach(([lbl, col, facs]) => {
-      t += `<tr><td>${lbl}</td>`;
-      ['VHSND','HWC','PHC','PMSMA site'].forEach(fac => {
-        if (facs && !facs.includes(fac)) { t += `<td><span class="rag-na">—</span></td>`; return; }
-        t += `<td>${pctCell(yPct(data, col, fac))}</td>`;
+    rows.forEach(([lbl,col,facs])=>{
+      t+=`<tr><td style="font-size:11.5px">${lbl}</td>`;
+      ['VHSND','HWC','PHC','PMSMA site'].forEach(fac=>{
+        if(facs && !facs.includes(fac)&&!facs.includes(fac.replace(' site',''))){ t+=`<td><span class="na">—</span></td>`; return; }
+        t+=`<td>${ragSpan(yPct(data,col,fac))}</td>`;
       });
-      const allRows = facs ? data.filter(r => facs.includes(r.facility)) : data;
-      const valid = allRows.filter(r => r[col] !== null);
-      const ov = valid.length ? pct(valid.filter(r=>r[col]===1).length, valid.length) : null;
-      t += `<td><div class="pct-cell"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${ov||0}%;background:${barColor(ov)}"></div></div><span class="pct-label" style="color:${barColor(ov)}">${ov!==null?ov+'%':'—'}</span></div></td></tr>`;
+      const src=facs?data.filter(r=>facs.includes(r.facility)||facs.some(f=>r.facility.startsWith(f))):data;
+      const vd=src.filter(r=>r[col]!==null);
+      const ov=vd.length?pct(vd.filter(r=>r[col]===1).length,vd.length):null;
+      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div></td></tr>`;
     });
-    t += `</tbody></table></div>`;
+    t+=`</tbody></table></div>`;
     return t;
   }
 
-  html += compTable('Supplies Compliance','SUPPLIES','tag-supply',[
+  h+=ctable('Supplies Compliance','SUPPLIES','t-sup',[
     ['A.1 RDT kits available','A1',null],
     ['A.2 Kits within expiry','A2_exp',null],
     ['A.2 Buffer stock maintained','A2_buf',['HWC','PHC']],
@@ -984,8 +772,7 @@ function renderDashboard(data) {
     ['A.8 Referral slips','A8',null],
     ['A.9 IEC materials displayed','A9',null],
   ]);
-
-  html += compTable('Equipment & Cold Chain','EQUIPMENT','tag-equip',[
+  h+=ctable('Equipment & Cold Chain','EQUIPMENT','t-eq',[
     ['A.6 Refrigerator functional','A6',['HWC','PHC','PMSMA site']],
     ['A.7 Electricity backup','A7',['HWC','PHC','PMSMA site']],
     ['A-CC.1 Fridge for RDT kits','ACC1',['HWC','PHC','PMSMA site']],
@@ -993,10 +780,9 @@ function renderDashboard(data) {
     ['A-CC.3 Temperature chart AM+PM','ACC3',['HWC','PHC','PMSMA site']],
     ['A-CC.5 Power backup','ACC5',['HWC','PHC','PMSMA site']],
     ['A-CC.6 Fridge properly used','ACC6',['HWC','PHC','PMSMA site']],
-    ['A-CC.7 Thermometer available','ACC7',['HWC','PHC','PMSMA site']],
+    ['A-CC.7 Thermometer','ACC7',['HWC','PHC','PMSMA site']],
   ]);
-
-  html += compTable('Training & Capacity','TRAINING','tag-train',[
+  h+=ctable('Training & Capacity','TRAINING','t-tr',[
     ['D.1 MO aware of EVTHS guidelines','D1',['PHC','PMSMA site']],
     ['D.2 CHO trained on dual RDT','D2',['HWC','VHSND']],
     ['D.3 ANM/MPW trained on dual RDT','D3',null],
@@ -1005,246 +791,119 @@ function renderDashboard(data) {
     ['D.6 Referral pathways understood','D6',null],
     ['D.7 ANM/ASHA in ANC tracking','D7',['HWC','VHSND']],
   ]);
-
-  html += compTable('Clinical Practice & Follow-up','CLINICAL','tag-clinical',[
+  h+=ctable('Clinical Practice & Follow-up','CLINICAL','t-cl',[
     ['B.11 MCP card updated','B11',null],
     ['B.12 BMW segregated','B12',null],
     ['E.4a Testing in RCH register','E4a',null],
     ['E.5 ART Centre linkage','E5',null],
   ]);
 
-  // Outcome counts
-  html += `<div class="tbl-card">
-    <div class="tbl-head"><span class="section-tag tag-outcome">OUTCOMES</span>Service Delivery Counts & Ratios</div>
-    <div class="chart-grid" style="margin-top:12px">`;
+  // Outcomes
+  const vB1=data.reduce((s,r)=>s+(r.vhsnd_B1||0),0);
+  const vB2=data.reduce((s,r)=>s+(r.vhsnd_B2||0),0);
+  const vB3=data.reduce((s,r)=>s+(r.vhsnd_B3||0),0);
+  const vB4=data.reduce((s,r)=>s+(r.vhsnd_B4||0),0);
+  const hB1=data.reduce((s,r)=>s+(r.hwc_B1||0),0);
+  const hB2=data.reduce((s,r)=>s+(r.hwc_B2||0),0);
+  const hB3=data.reduce((s,r)=>s+(r.hwc_B3||0),0);
+  const pB1=data.reduce((s,r)=>s+(r.phc_B1||0),0);
+  const pB3=data.reduce((s,r)=>s+(r.phc_B3||0),0);
+  const mB1=data.reduce((s,r)=>s+(r.pmsma_B1||0),0);
+  const mB11=data.reduce((s,r)=>s+(r.pmsma_B11||0),0);
+  const r=(a,b)=>b>0?Math.round(a/b*100*10)/10:null;
 
-  const vhsndB1 = data.reduce((s,r) => s+(r.vhsnd_B1||0), 0);
-  const vhsndB2 = data.reduce((s,r) => s+(r.vhsnd_B2||0), 0);
-  const vhsndB3 = data.reduce((s,r) => s+(r.vhsnd_B3||0), 0);
-  const vhsndB4 = data.reduce((s,r) => s+(r.vhsnd_B4||0), 0);
-  const hwcB1  = data.reduce((s,r) => s+(r.hwc_B1||0), 0);
-  const hwcB2  = data.reduce((s,r) => s+(r.hwc_B2||0), 0);
-  const hwcB3  = data.reduce((s,r) => s+(r.hwc_B3||0), 0);
-  const phcB1  = data.reduce((s,r) => s+(r.phc_B1||0), 0);
-  const phcB3  = data.reduce((s,r) => s+(r.phc_B3||0), 0);
-  const pmsB1  = data.reduce((s,r) => s+(r.pmsma_B1||0), 0);
-  const pmsB11 = data.reduce((s,r) => s+(r.pmsma_B11||0), 0);
-
-  function outTbl(title, rows) {
-    let t = `<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#1f3864;margin-bottom:8px">${title}</div>
-      <table style="width:100%"><thead><tr><th>Indicator</th><th>Count</th><th>Ratio</th></tr></thead><tbody>`;
-    rows.forEach(([lbl, val, ratio]) => {
-      const rStr = ratio!==null ? `<span style="color:#198754;font-weight:700">${Math.round(ratio*10)/10}%</span>` : '—';
-      t += `<tr><td style="font-size:11.5px">${lbl}</td><td style="font-weight:700;color:#1f3864">${Math.round(val)}</td><td>${rStr}</td></tr>`;
+  function otbl(title, rows){
+    let t=`<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#1f3864;margin-bottom:8px">${title}</div>
+    <table><thead><tr><th>Indicator</th><th>Count</th><th>Ratio</th></tr></thead><tbody>`;
+    rows.forEach(([lbl,val,ratio])=>{
+      const rs=ratio!==null?`<span style="color:#198754;font-weight:700">${ratio}%</span>`:'—';
+      t+=`<tr><td style="font-size:11px">${lbl}</td><td style="font-weight:700;color:#1f3864">${Math.round(val)}</td><td>${rs}</td></tr>`;
     });
-    t += `</tbody></table></div>`;
-    return t;
+    return t+'</tbody></table></div>';
   }
-  const r = (a,b) => b > 0 ? a/b*100 : null;
-
-  html += outTbl('VHSND Outcomes',[
-    ['B.1 PW attending', vhsndB1, null],
-    ['B.2 PW counselled', vhsndB2, r(vhsndB2, vhsndB1)],
-    ['B.3 PW screened', vhsndB3, r(vhsndB3, vhsndB1)],
-    ['B.4 PW reactive', vhsndB4, r(vhsndB4, vhsndB3)],
-  ]);
-  html += outTbl('HWC Outcomes',[
-    ['B.1 PW registered', hwcB1, null],
-    ['B.2 PW screened', hwcB2, r(hwcB2, hwcB1)],
-    ['B.3 PW reactive', hwcB3, r(hwcB3, hwcB2)],
-  ]);
-  html += outTbl('PHC Outcomes',[
-    ['B.1 ANC registrations', phcB1, null],
-    ['B.3 PW screened HIV', phcB3, r(phcB3, phcB1)],
-  ]);
-  html += outTbl('PMSMA Outcomes',[
-    ['BP1 PW attending', pmsB1, null],
-    ['BP1.1 PW screened', pmsB11, r(pmsB11, pmsB1)],
-  ]);
-  html += `</div></div>`;
-
-  html += `<div class="chart-grid">
-    <div class="chart-card">
-      <div class="chart-head">Overall Compliance Summary</div>
-      <div class="chart-sub">Average % Yes across key indicator groups</div>
-      <div class="chart-wrap" style="height:280px"><canvas id="c-db-comp"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head">Block-wise Facility Coverage</div>
-      <div class="chart-sub">Stacked visits by block and facility type</div>
-      <div class="chart-wrap" style="height:280px"><canvas id="c-db-block"></canvas></div>
+  h+=`<div class="tbl-card"><div class="tbl-title"><span class="tag t-oc">OUTCOMES</span>Service Delivery Counts & Ratios</div>
+    <div class="chart-grid">
+      ${otbl('VHSND',[['B.1 PW attending',vB1,null],['B.2 PW counselled',vB2,r(vB2,vB1)],['B.3 PW screened',vB3,r(vB3,vB1)],['B.4 PW reactive',vB4,r(vB4,vB3)]])}
+      ${otbl('HWC',[['B.1 PW registered',hB1,null],['B.2 PW screened',hB2,r(hB2,hB1)],['B.3 PW reactive',hB3,r(hB3,hB2)]])}
+      ${otbl('PHC',[['B.1 ANC registrations',pB1,null],['B.3 PW screened HIV',pB3,r(pB3,pB1)]])}
+      ${otbl('PMSMA',[['BP1 PW attending',mB1,null],['BP1.1 PW screened',mB11,r(mB11,mB1)]])}
     </div>
   </div>`;
 
-  document.getElementById('dashboard-content').innerHTML = html;
+  h+=`<div class="chart-grid">
+    <div class="cc"><div class="cc-head">Compliance Summary by Category</div><div class="cc-sub">Average % Yes across key groups</div>
+      <div class="cwrap" style="height:260px"><canvas id="cv-db-cmp" role="img" aria-label="Compliance summary bar chart"></canvas></div>
+    </div>
+    <div class="cc"><div class="cc-head">Block-wise Facility Coverage</div><div class="cc-sub">Stacked by facility type</div>
+      <div class="cwrap" style="height:${Math.max(260,Object.keys(data.reduce((a,r)=>{a[r.block]=1;return a},{})).length*36+80)}px">
+      <canvas id="cv-db-blk" role="img" aria-label="Block facility stacked bar chart"></canvas></div>
+    </div>
+  </div>`;
 
-  const compGroups = [
-    ['Supplies',  ['A1','A2_exp','A4','A8','A9']],
-    ['Equipment', ['A6','A7','ACC1','ACC2','ACC3']],
-    ['Training',  ['D1','D2','D3','D5','D6']],
-    ['Clinical',  ['B11','B12','E4a','E5']],
-  ];
-  const compAvgs = compGroups.map(([_, cols]) => {
-    const vals = cols.map(c => yPct(data, c, null)).filter(v => v !== null);
-    return vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length) : 0;
+  document.getElementById('c-dash').innerHTML = h;
+
+  const cgps=[['Supplies',['A1','A2_exp','A4','A8','A9']],['Equipment',['A6','A7','ACC1','ACC2','ACC3']],
+    ['Training',['D1','D2','D3','D5','D6']],['Clinical',['B11','B12','E4a','E5']]];
+  const cavgs=cgps.map(([_,cols])=>{
+    const v=cols.map(c=>yPct(data,c,null)).filter(x=>x!==null);
+    return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):0;
   });
-  makeChart('c-db-comp', {type:'bar',
-    data:{labels:compGroups.map(g=>g[0]),datasets:[{label:'Avg Compliance %',data:compAvgs,
-      backgroundColor:compAvgs.map(v=>v>=80?'rgba(25,135,84,0.7)':v>=50?'rgba(245,158,11,0.7)':'rgba(220,53,69,0.7)'),
-      borderColor:compAvgs.map(v=>v>=80?'#198754':v>=50?'#f59e0b':'#dc3545'),borderWidth:2}]},
+  mkChart('cv-db-cmp',{type:'bar',data:{labels:cgps.map(g=>g[0]),datasets:[{label:'Avg %',data:cavgs,
+    backgroundColor:cavgs.map(v=>v>=80?'rgba(25,135,84,.7)':v>=50?'rgba(245,158,11,.7)':'rgba(220,53,69,.7)'),
+    borderColor:cavgs.map(v=>v>=80?'#198754':v>=50?'#f59e0b':'#dc3545'),borderWidth:2}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
       scales:{y:{beginAtZero:true,max:100,ticks:{font:{size:10},callback:v=>v+'%'}},x:{ticks:{font:{size:11}}}}}});
 
-  const blocks = [...new Set(data.map(r=>r.block).filter(Boolean))].sort();
-  const facC = ['#1f7cd5','#00b69b','#6f42c1','#f59e0b'];
-  const facK = ['HWC','VHSND','PHC','PMSMA site'];
-  const blockH = Math.max(260, blocks.length*36+80);
-  document.querySelector('#c-db-block')?.parentElement && (document.querySelector('#c-db-block').parentElement.style.height = blockH+'px');
-  makeChart('c-db-block', {type:'bar',
-    data:{labels:blocks, datasets:facK.map((fac,i) => ({
-      label:fac,
-      data:blocks.map(b=>data.filter(r=>r.block===b&&r.facility===fac).length),
-      backgroundColor:facC[i]+'cc', borderColor:facC[i], borderWidth:1
-    }))},
+  const blks=[...new Set(data.map(r=>r.block))].sort();
+  const fkeys=['HWC','VHSND','PHC','PMSMA site'];
+  const fclrs=['#1f7cd5','#00b69b','#6f42c1','#f59e0b'];
+  mkChart('cv-db-blk',{type:'bar',data:{labels:blks,datasets:fkeys.map((fk,i)=>({
+    label:fk,data:blks.map(b=>data.filter(r=>r.block===b&&r.facility===fk).length),
+    backgroundColor:fclrs[i]+'cc',borderColor:fclrs[i],borderWidth:1}))},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
       plugins:{legend:{labels:{font:{size:10}}}},
       scales:{x:{beginAtZero:true,stacked:true,ticks:{font:{size:9}}},y:{stacked:true,ticks:{font:{size:10}}}}}});
 }
 
-/* ═══════════════════════════════════════════════
-   PAGE 4 — FIELD MAPPING
-═══════════════════════════════════════════════ */
-function renderFieldMap() {
-  if (!fieldDetectionMap) {
-    document.getElementById('fieldmap-content').innerHTML = `
-      <div class="empty-state">
-        <div style="font-size:40px;margin-bottom:16px">🗺️</div>
-        <h3>No field mapping yet</h3>
-        <p>Connect to KoboToolbox first. The dashboard will auto-detect your form's field names.</p>
-        <button class="connect-btn" onclick="showTokenModal()">Connect KoboToolbox</button>
-      </div>`;
-    return;
-  }
-
-  const allFields = ['facility','district','block','sector','date','coordinator', ...INDICATOR_FIELDS, ...NUMERIC_FIELDS];
-  const mapped = allFields.filter(f => fieldDetectionMap[f]);
-  const missing = allFields.filter(f => !fieldDetectionMap[f]);
-
-  let html = `<div class="field-map-panel">
-    <div class="field-map-title">
-      🗺️ Auto-detected Field Mapping
-      <span style="font-size:11px;font-weight:400;color:#605e5c;margin-left:8px">${mapped.length}/${allFields.length} fields detected</span>
-      <button onclick="resetFieldMap()" style="margin-left:auto;font-size:11px;padding:3px 10px;border:1px solid #ddd;border-radius:4px;cursor:pointer;background:#f8f9fa">Reset & Re-detect</button>
-    </div>`;
-
-  if (missing.length > 0) {
-    html += `<div style="background:#fff5f5;border:1px solid #f8c4c4;border-radius:5px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7b1c1c">
-      <strong>⚠ ${missing.length} fields not detected:</strong> ${missing.join(', ')}<br>
-      <span style="color:#a19f9d;font-size:11px;margin-top:4px;display:block">These indicators will show "—" in the dashboard. If your form uses different field names, you can manually edit the mapping below.</span>
-    </div>`;
-  }
-
-  html += `<div class="field-map-grid">`;
-  allFields.forEach(f => {
-    const koboKey = fieldDetectionMap[f];
-    const ok = !!koboKey;
-    html += `<div class="field-row ${ok?'ok':'missing'}">
-      <span class="field-key">${f}</span>
-      <span class="field-val">${ok ? '→ '+koboKey : 'not found'}</span>
-      <span class="${ok?'field-badge-ok':'field-badge-miss'}">${ok?'✓':'✗'}</span>
-    </div>`;
-  });
-  html += `</div></div>`;
-
-  // Manual override section
-  html += `<div class="field-map-panel">
-    <div class="field-map-title">✏️ Manual Field Override</div>
-    <p style="font-size:12px;color:#605e5c;margin-bottom:14px">If a field is not auto-detected, paste the exact KoboToolbox field name from your form here.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">`;
-
-  allFields.forEach(f => {
-    html += `<div style="display:flex;align-items:center;gap:6px">
-      <label style="min-width:90px;font-weight:600;color:#1f3864">${f}</label>
-      <input type="text" id="fm-${f}" value="${fieldDetectionMap[f]||''}" placeholder="kobo field name…"
-        style="flex:1;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:11.5px">
-    </div>`;
-  });
-
-  html += `</div>
-    <div style="margin-top:14px">
-      <button onclick="saveManualFieldMap()" style="padding:8px 20px;background:#1f3864;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer">Save Field Mapping</button>
-    </div>
-  </div>`;
-
-  // Show sample raw record
-  if (RAW_DATA.length > 0) {
-    html += `<div class="field-map-panel">
-      <div class="field-map-title">🔍 Sample Transformed Record (row 1)</div>
-      <pre style="font-size:11px;color:#323130;background:#f8f9fa;padding:12px;border-radius:5px;overflow-x:auto;white-space:pre-wrap">${JSON.stringify(RAW_DATA[0], null, 2)}</pre>
-    </div>`;
-  }
-
-  document.getElementById('fieldmap-content').innerHTML = html;
-}
-
-function saveManualFieldMap() {
-  const allFields = ['facility','district','block','sector','date','coordinator', ...INDICATOR_FIELDS, ...NUMERIC_FIELDS];
-  const newMap = {...fieldDetectionMap};
-  allFields.forEach(f => {
-    const el = document.getElementById('fm-'+f);
-    if (el && el.value.trim()) newMap[f] = el.value.trim();
-  });
-  fieldDetectionMap = newMap;
-  localStorage.setItem('kobo_field_map', JSON.stringify(newMap));
-  // Re-transform with new map
-  if (RAW_DATA.length > 0) {
-    alert('Field mapping saved! Click Refresh to re-load data with new mapping.');
-  }
-}
-
-function resetFieldMap() {
-  fieldDetectionMap = null;
-  localStorage.removeItem('kobo_field_map');
-  loadKoboData();
-}
-
-/* ═══════════════════════════════════════════════
-   PAGE SWITCHING & RENDER
-═══════════════════════════════════════════════ */
-function showPage(id, event) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+/* ═══════════════════════════════════════════════════════════
+   ROUTING + RENDER
+═══════════════════════════════════════════════════════════ */
+let currentPage = 'tva';
+function showPage(id, tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  if (event && event.target) event.target.classList.add('active');
+  if(tab) tab.classList.add('active');
+  currentPage = id;
   render();
 }
 
-function render() {
-  const activePage = document.querySelector('.page.active')?.id?.replace('page-','');
+function render(){
   const data = getData();
-  if (activePage === 'tva')          renderTVA(data);
-  else if (activePage === 'infographics') renderInfographics(data);
-  else if (activePage === 'dashboard')    renderDashboard(data);
-  else if (activePage === 'fieldmap')     renderFieldMap();
+  document.getElementById('recCount').textContent = data.length;
+  document.getElementById('recTotal').textContent = ALL_DATA.length;
+  document.getElementById('recBanner').style.display = 'flex';
+  if(currentPage==='tva')  renderTVA(data);
+  if(currentPage==='info') renderInfo(data);
+  if(currentPage==='dash') renderDash(data);
 }
 
-/* ═══════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════ */
-(function init() {
-  document.getElementById('refreshTime').textContent = '';
+/* ═══════════════════════════════════════════════════════════
+   BOOT — try API first, fall back to seed data
+═══════════════════════════════════════════════════════════ */
+(async ()=>{
+  // Load seed data immediately so dashboard isn't empty if API fails
+  const seed = [{"facility":"HWC","district":"Hojai","block":"Jugijaan","sector":"nan","date":"2026-04-02","coordinator":"Rohit Kharel","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":1,"A9":1,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":1,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":1,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":60.0,"hwc_B2":60.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Hojai","block":"Jugijaan","sector":"nan","date":"2026-04-02","coordinator":"Rohit Kharel","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":1,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":1,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":1,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":88.0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Kathiatoli","sector":"Kachua","date":"2026-04-02","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":8.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PHC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-09","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":1,"A5":0,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":0,"D2":null,"D3":0,"D4":0,"D5":1,"D6":1,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":95.0,"phc_B3":95.0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PHC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-02-17","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":1,"A4":1,"A5":0,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":0,"D2":null,"D3":0,"D4":1,"D5":1,"D6":1,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":11.0,"phc_B3":106.0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PHC","district":"Nagaon","block":"Simonabasti","sector":"Kuwaritol MPHC","date":"2026-02-18","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":0,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":0,"D2":null,"D3":0,"D4":0,"D5":1,"D6":0,"D7":null,"B11":0,"B12":1,"E4a":null,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":9.0,"phc_B3":33.0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PMSMA site","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-02-09","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":0,"A5b":0,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":0,"ACC6":1,"ACC7":1,"D1":0,"D2":null,"D3":0,"D4":null,"D5":1,"D6":0,"D7":null,"B11":0,"B12":1,"E4a":null,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":104.0,"pmsma_B11":0.0},{"facility":"PMSMA site","district":"Nagaon","block":"Simonabasti","sector":"Kuwaritol MPHC","date":"2026-02-20","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":0,"A5b":0,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":0,"D2":null,"D3":0,"D4":null,"D5":1,"D6":0,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":56.0,"pmsma_B11":0.0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-10","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":28.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":41.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":47.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":136.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-02-16","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":1,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":36.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Singiaputani","date":"2026-02-23","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":38.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua","date":"2026-02-24","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":1,"D7":0,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":168.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Garukhunda SHC","date":"2026-02-24","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":201.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-02-25","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":118.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-02-25","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":14.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-11","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":10.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-02-14","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":11.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-02-18","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":8.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-02-25","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":1,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":19.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-03-18","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":9.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Kathiatoli","sector":"Garukhunda SHC","date":"2026-04-02","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":25.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-03-06","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":21.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Nonoi SD","date":"2026-03-06","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":18.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-03-10","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":126.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-03-10","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":74.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-03-10","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":10.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-03-10","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":29.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-03-11","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":66.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-03-11","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":20.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-03-11","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":17.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-03-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":12.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Singimari","date":"2026-03-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":14.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Longjup","date":"2026-03-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":1,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":39.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kampur","date":"2026-03-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":6.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-03-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":54.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-03-12","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":65.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Kuwaritol MPHC","date":"2026-02-19","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":23.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Kuwaritol MPHC","date":"2026-02-19","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":26.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Kuwaritol MPHC","date":"2026-02-27","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":1,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":18.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-05","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":32.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-05","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":10.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-09","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":36.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-09","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":1,"B12":1,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":34.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Barhampur","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":18.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Nonoi","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":14.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kothiatoli","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":17.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Singimari","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":18.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Kachua MH","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":67.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":19.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Panigaon","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":19.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":8.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Panigaon","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":6.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Simonabasti","sector":"Simonabasti","date":"2026-03-13","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":7.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Kathiatoli","sector":"Koroyoni","date":"2026-03-14","coordinator":"Mayuri Kurmi","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":17.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Jakhalabandha","sector":"Jaklabanda","date":"2026-03-12","coordinator":"Dilip Pariga","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":1,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":69.0,"hwc_B2":0.0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Jakhalabandha","sector":"Jaklabanda","date":"2026-03-12","coordinator":"Dilip Pariga","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":null,"D6":null,"D7":1,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":69.0,"hwc_B2":0.0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Jakhalabandha","sector":"Jawani SC","date":"2026-03-12","coordinator":"Dilip Pariga","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":1,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":null,"D6":null,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":157.0,"hwc_B2":0.0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Barapujia BPHC","date":"2026-02-09","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":1,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":11.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Amchoi SD","date":"2026-02-28","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":1,"D3":0,"D4":0,"D5":1,"D6":1,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":38.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Jajoi SD","date":"2026-02-20","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":12.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Amsoi SD","date":"2026-03-03","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":24.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Nagaon Urban","sector":"Moukhuli UPHC","date":"2026-03-06","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":41.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Moukhuli UPHC","date":"2026-02-24","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":6.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Jajoi","date":"2026-02-20","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":5.0,"hwc_B2":0.0,"hwc_B3":8.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Babejia Chc","date":"2026-02-17","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":37.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Nagaon Urban","sector":"Dhing gate UPHC","date":"2026-02-24","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":38.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Bhalukmari AAM","date":"2026-02-16","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":5.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Buragohianthan BPHC","date":"2026-02-20","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":26.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Deudhar MPHC","date":"2026-02-17","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":12.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Babejia CHC","date":"2026-03-06","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":3.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Borjoha SD","date":"2026-03-09","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":27.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Babejia CHC","date":"2026-02-23","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":29.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Barapujia BPHC","date":"2026-03-12","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":46.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dagaon","sector":"Juria MPHC","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":20.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dagaon","sector":"Dagaon","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":120.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dagaon","sector":"Bunikatia","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dagaon","sector":"Bolikatia","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":125.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"nan","district":"Nagaon","block":"Dagaon","sector":"Dagaon PHC","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":0,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":null,"D3":null,"D4":null,"D5":0,"D6":0,"D7":null,"B11":0,"B12":0,"E4a":null,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Batadrava","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":1,"D3":1,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":98.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Besamari MPHC","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":73.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Kandhulimari RPHC","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":28.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Batadrava","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":null,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":56.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Batadrava","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":64.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Kandhulimari RPHC","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":56.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Dhing","sector":"Kandhulimari RPHC","date":"2026-03-14","coordinator":"Madhushri Dutta","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":51.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Babejia CHC","date":"2026-02-24","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":45.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Ai bhati MPHC","date":"2026-03-12","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":40.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Deudhar MPHC","date":"2026-03-12","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":25.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Jajoi SD","date":"2026-03-02","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":1,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":9.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Roha Shc","date":"2026-03-11","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":18.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Roha SHC","date":"2026-03-20","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":7.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Barapujia BPHC","date":"2026-03-20","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":9.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Mahadewsal MPHC","date":"2026-03-12","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":3.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Mohgorh MPHC","date":"2026-03-05","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":11.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Amsoi SD","date":"2026-03-11","coordinator":"Aditi Saikia","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":0,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":19.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Roha SHC","date":"2026-03-23","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":17.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Buragohaithan","sector":"Mohgorh MPHC","date":"2026-02-05","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":19.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Mahadewsal SHC","date":"2026-03-11","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":43.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Hatichung MPHC","date":"2026-03-14","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":33.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Mahadeuhal MPHC","date":"2026-03-11","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":13.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Barapujia BPHC","date":"2026-03-02","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":5.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Phulguri SD","date":"2026-03-06","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":9.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Balajan SD","date":"2026-04-17","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":0,"A5":null,"A5b":null,"A6":0,"A7":0,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":1,"B11":0,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":9.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"HWC","district":"Nagaon","block":"Barapujia","sector":"Ranthali Chc","date":"2026-02-27","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":46.0,"hwc_B2":0.0,"hwc_B3":0.0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Barapujia","sector":"Roha SHC","date":"2026-02-04","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":6.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Nagaon Urban","sector":"Dhing gate UPHC","date":"2026-02-11","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":8.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Buragohaithan","sector":"Babejia CHC","date":"2026-03-18","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":0,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":5.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Buragohaithan","sector":"Babejia CHC","date":"2026-03-18","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":0,"B11":1,"B12":0,"E4a":0,"E5":0,"vhsnd_B1":4.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Barapujia","sector":"Barapujia BPHC","date":"2026-04-02","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":1,"B11":1,"B12":1,"E4a":1,"E5":0,"vhsnd_B1":9.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"VHSND","district":"Nagaon","block":"Buragohaithan","sector":"Deudhar MPHC","date":"2026-04-02","coordinator":"Aditi Saikia","validation":"Not Approved","A1":0,"A2_exp":null,"A2_buf":null,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":null,"A7":null,"A8":0,"A9":0,"ACC1":null,"ACC2":null,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":null,"D1":null,"D2":0,"D3":0,"D4":null,"D5":0,"D6":0,"D7":1,"B11":1,"B12":0,"E4a":1,"E5":0,"vhsnd_B1":15.0,"vhsnd_B2":0.0,"vhsnd_B3":0.0,"vhsnd_B4":0.0,"vhsnd_B5":0.0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PHC","district":"Nagaon","block":"Samaguri","sector":"Samaguri","date":"2026-02-10","coordinator":"Dilip Pariga","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":1,"A5":0,"A5b":null,"A6":1,"A7":1,"A8":1,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":null,"ACC7":1,"D1":1,"D2":null,"D3":0,"D4":1,"D5":1,"D6":1,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":52.0,"phc_B3":209.0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PHC","district":"Nagaon","block":"Jakhalabandha","sector":"Jaklabanda","date":"2026-02-11","coordinator":"Dilip Pariga","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":1,"A9":0,"ACC1":1,"ACC2":1,"ACC3":null,"ACC5":null,"ACC6":null,"ACC7":1,"D1":1,"D2":null,"D3":0,"D4":1,"D5":1,"D6":1,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":64.0,"phc_B3":376.0,"pmsma_B1":0,"pmsma_B11":0},{"facility":"PMSMA site","district":"Nagaon","block":"Samaguri","sector":"Samaguri","date":"2026-02-19","coordinator":"Dilip Pariga","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":1,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":1,"D2":null,"D3":0,"D4":null,"D5":1,"D6":1,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":478.0,"pmsma_B11":209.0},{"facility":"PMSMA site","district":"Nagaon","block":"Samaguri","sector":"Kawaimari FRU","date":"2026-02-24","coordinator":"Dilip Pariga","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":null,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":1,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":1,"D2":null,"D3":0,"D4":null,"D5":null,"D6":null,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":283.0,"pmsma_B11":283.0},{"facility":"PMSMA site","district":"Nagaon","block":"Jakhalabandha","sector":"Jaklabanda","date":"2026-02-11","coordinator":"Dilip Pariga","validation":"Not Approved","A1":1,"A2_exp":null,"A2_buf":1,"A3_stk":0,"A4":1,"A5":null,"A5b":null,"A6":1,"A7":1,"A8":1,"A9":0,"ACC1":1,"ACC2":1,"ACC3":1,"ACC5":1,"ACC6":1,"ACC7":1,"D1":1,"D2":null,"D3":0,"D4":null,"D5":null,"D6":null,"D7":null,"B11":1,"B12":1,"E4a":null,"E5":null,"vhsnd_B1":0,"vhsnd_B2":0,"vhsnd_B3":0,"vhsnd_B4":0,"vhsnd_B5":0,"hwc_B1":0,"hwc_B2":0,"hwc_B3":0,"phc_B1":0,"phc_B3":0,"pmsma_B1":467.0,"pmsma_B11":467.0}];
+  ALL_DATA = seed;
+  document.getElementById('loadingMsg').textContent = 'Fetching live data from KoboToolbox…';
+  rebuildFilters();
+  render();
 
-  if (koboApiToken) {
-    // Token is saved — auto-load on open
-    loadKoboData();
-  } else {
-    // Show connect prompt on all pages
-    document.getElementById('koboStatus').textContent = '⚪ Click to Connect';
-    renderEmptyState('tva-content');
-    renderEmptyState('infographics-content');
-    renderEmptyState('dashboard-content');
-  }
+  // Now fetch live from API
+  await fetchData();
+
+  // Auto-refresh every 5 minutes
+  setInterval(fetchData, 5 * 60 * 1000);
 })();
 </script>
-</body>
-</html>
+</body></html>
