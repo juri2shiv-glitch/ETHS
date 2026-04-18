@@ -3,7 +3,7 @@ name: Sync KoboToolbox Data
 on:
   schedule:
     - cron: "*/5 * * * *"   # every 5 minutes
-  workflow_dispatch:       # manual run button
+  workflow_dispatch:
 
 jobs:
   fetch-kobo-data:
@@ -14,8 +14,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Fetch Kobo data
+        env:
+          KOBO_TOKEN: ${{ secrets.KOBO_TOKEN }}
+          KOBO_ASSET_UID: ${{ secrets.KOBO_ASSET_UID }}
+          KOBO_BASE_URL: ${{ secrets.KOBO_BASE_URL }}
         run: |
           mkdir -p data
+          echo "Fetching from: $KOBO_BASE_URL"
           curl -sS \
             -H "Authorization: Token $KOBO_TOKEN" \
             "$KOBO_BASE_URL/api/v2/assets/$KOBO_ASSET_UID/data/?format=json&limit=100000" \
@@ -28,4 +33,3 @@ jobs:
           git add data/kobo_latest.json
           git commit -m "Auto-update Kobo data" || echo "No changes"
           git push
-
