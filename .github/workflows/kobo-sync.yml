@@ -13,18 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch Kobo data
-        env:
-          KOBO_TOKEN: ${{ secrets.KOBO_TOKEN }}
-          KOBO_ASSET_UID: ${{ secrets.KOBO_ASSET_UID }}
-          KOBO_BASE_URL: ${{ secrets.KOBO_BASE_URL }}
-        run: |
-          mkdir -p data
-          echo "Fetching from: $KOBO_BASE_URL"
-          curl -sS \
-            -H "Authorization: Token $KOBO_TOKEN" \
-            "$KOBO_BASE_URL/api/v2/assets/$KOBO_ASSET_UID/data/?format=json&limit=100000" \
-            > data/kobo_latest.json
+       - name: Fetch Kobo data
+  env:
+    KOBO_BASE_URL: ${{ vars.KOBO_BASE_URL }}
+    KOBO_ASSET_UID: ${{ vars.KOBO_ASSET_UID }}
+    KOBO_TOKEN: ${{ vars.KOBO_TOKEN }}
+  run: |
+    echo "Using base URL: $KOBO_BASE_URL"
+    mkdir -p data
+    curl -sS \
+      -H "Authorization: Token $KOBO_TOKEN" \
+      "$KOBO_BASE_URL/api/v2/assets/$KOBO_ASSET_UID/data/?format=json&limit=100000" \
+      > data/kobo_latest.json
 
       - name: Commit and push data
         run: |
