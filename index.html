@@ -297,9 +297,18 @@ function mapRecord(r) {
 
   return {
     _id: r['_id'],
-    facility:    String(findKey(r,['Facility type?','Facility_type','facility_type'])||'').trim() || 'Unknown',
-    district:    String(findKey(r,['District','district'])||'').trim(),
-    block:       String(findKey(r,['Block','block'])||'').trim() || 'Unknown',
+    facility: (()=>{
+      const raw = String(findKey(r,['Facility type?','Facility_type','facility_type','facility'])||'').trim().toLowerCase();
+      const map = {
+        'hwc':'HWC', 'health and wellness centre':'HWC', 'health & wellness centre':'HWC',
+        'vhsnd':'VHSND', 'village health sanitation and nutrition day':'VHSND',
+        'phc':'PHC', 'primary health centre':'PHC',
+        'pmsma':'PMSMA site', 'pmsma site':'PMSMA site', 'pradhan mantri surakshit matritva abhiyan':'PMSMA site',
+      };
+      return map[raw] || (raw ? raw.toUpperCase() : 'Unknown');
+    })(),
+    district:    String(findKey(r,['District','district'])||'').trim().replace(/\b\w/g,c=>c.toUpperCase()),
+    block:       String(findKey(r,['Block','block'])||'').trim().replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) || 'Unknown',
     sector:      String(findKey(r,['Sector / Sector Name','Sector_Sector_Name','sector'])||'').trim(),
     date,
     coordinator: coord || 'Unknown',
