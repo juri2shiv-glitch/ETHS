@@ -66,3 +66,4 @@ jobs:
           git diff --cached --quiet && echo "No new data" || \
             git commit -m "data: update all kobo forms [$(date -u '+%Y-%m-%d %H:%M UTC')]"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        
