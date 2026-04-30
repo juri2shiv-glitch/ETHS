@@ -1078,7 +1078,15 @@ function mkChart(id, cfg){
 }
 
 const pct = (y,t) => t>0 ? Math.round(y/t*100) : null;
-const barClr = p => p===null?'#ccc':p>=80?'#80BD41':p>=50?'#FFC20E':'#E2231A';
+   
+const barClr = p => {
+  const v = Number(p);
+  if (!isFinite(v)) return '#ccc';
+  if (v >= 80) return '#80BD41';
+  if (v >= 50) return '#FFC20E';
+  return '#E2231A';
+};
+   
 const ragSpan = p => p===null ? '<span class="na">—</span>' :
   p>=80 ? `<span class="g">${p}%</span>` :
   p>=50 ? `<span class="a">${p}%</span>` : `<span class="r">${p}%</span>`;
