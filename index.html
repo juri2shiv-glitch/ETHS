@@ -1703,6 +1703,163 @@ function renderClientDash(data) {
     </div>
   </div>`;
 
+  // ── DIVIDER ──
+  h += `<div style="border-top:2px solid #C9E8F5;margin:20px 0 16px;"></div>
+  <div style="font-size:13px;font-weight:800;color:#0058AB;letter-spacing:.3px;margin-bottom:14px">📊 Programme Overview</div>`;
+
+  // ── OLD TVA: KPI cards (visits + outcomes) ──
+  const total   = data.length;
+  const fc      = {HWC:0,VHSND:0,PHC:0,PMSMA:0};
+  data.forEach(r=>{
+    if(r.facility==='HWC') fc.HWC++;
+    else if(r.facility==='VHSND') fc.VHSND++;
+    else if(r.facility==='PHC') fc.PHC++;
+    else if(r.facility==='PMSMA site') fc.PMSMA++;
+  });
+  const pwScr     = data.reduce((s,r)=>s+(r.vhsnd_B3||0)+(r.hwc_B2||0)+(r.phc_B3||0)+(r.pmsma_B11||0),0);
+  const hivReact  = data.reduce((s,r)=>s+(r.vhsnd_B4||0)+(r.hwc_B3||0)+(r.phc_B2||0)+(r.pmsma_B12h||0),0);
+  const syphReact = data.reduce((s,r)=>s+(r.phc_B4||0)+(r.pmsma_B12s||0),0);
+  const pct2      = (a,b) => b>0?(a/b*100).toFixed(1)+'%':'—';
+  const sumF      = (rows,f) => rows.reduce((s,r)=>s+(r[f]||0),0);
+
+  h += `<div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${total}</div></div>
+    <div class="kpi teal"><div class="kpi-lbl">HWC</div><div class="kpi-val">${fc.HWC}</div></div>
+    <div class="kpi amber"><div class="kpi-lbl">VHSND</div><div class="kpi-val">${fc.VHSND}</div></div>
+    <div class="kpi purple"><div class="kpi-lbl">PHC</div><div class="kpi-val">${fc.PHC}</div></div>
+    <div class="kpi green"><div class="kpi-lbl">PMSMA</div><div class="kpi-val">${fc.PMSMA}</div></div>
+    <div class="kpi red"><div class="kpi-lbl">PW Screened</div><div class="kpi-val">${pwScr.toLocaleString()}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">HIV Reactive</div><div class="kpi-val">${hivReact}</div><div class="kpi-sub">${pct2(hivReact,pwScr)}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">Syphilis Reactive</div><div class="kpi-val">${syphReact}</div><div class="kpi-sub">${pct2(syphReact,pwScr)}</div></div>
+  </div>`;
+
+  // ── OLD TVA: Stacked facility bar ──
+  h += `<div class="cc" style="margin-bottom:16px">
+    <div class="cc-head">Facility-wise Visit Distribution</div>
+    <div class="cc-sub">Total ${total} supervisory visits across all facility types</div>
+    <div class="cwrap" style="height:120px"><canvas id="cv-cl-fac"></canvas></div>
+  </div>`;
+
+  // ── OLD TVA: Equipment & Cold Chain tiles ──
+  const ccFields = [
+    ['Refrigerator Functional','ACC1'],['Temp +2°C to +8°C','ACC2'],
+    ['Temp Chart Updated','ACC3'],['Power Backup','ACC5'],
+    ['Fridge Properly Used','ACC6'],['Thermometer Available','ACC7'],
+  ];
+  h += `<div class="tbl-card" style="margin-bottom:16px">
+    <div class="tbl-title"><span class="tag t-eq">EQUIPMENT & COLD CHAIN</span>Cold Chain Compliance Overview</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:4px 0">`;
+  ccFields.forEach(([lbl,field])=>{
+    const facs = data.filter(r=>['HWC','PHC','PMSMA site'].includes(r.facility));
+    const recs = facs.filter(r=>r[field]!==null);
+    const yes  = recs.filter(r=>r[field]===1).length;
+    const p    = recs.length?Math.round(yes/recs.length*100):null;
+    const clr  = p===null?'#ccc':p>=80?'#80BD41':p>=50?'#FFC20E':'#E2231A';
+    const bg   = p===null?'#f8f9fb':p>=80?'#f0fae8':p>=50?'#fffbe6':'#fceaea';
+    h += `<div style="background:${bg};border-radius:8px;padding:12px;border:1px solid ${clr}40;text-align:center">
+      <div style="font-size:9.5px;font-weight:700;color:#374EA2;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">${lbl}</div>
+      <div style="font-size:26px;font-weight:800;color:${clr}">${p!==null?p+'%':'—'}</div>
+    </div>`;
+  });
+  h += `</div></div>`;
+
+  // ── OLD TVA: Key supply indicators ──
+  const keySupply=[
+    {lbl:'RDT Kits Available',field:'A1'},
+    {lbl:'Referral Slips',field:'A8'},
+    {lbl:'IEC Materials',field:'A9'},
+    {lbl:'MCP Card Updated',field:'B11'},
+  ];
+  h+=`<div class="tbl-card" style="margin-bottom:16px">
+    <div class="tbl-title"><span class="tag t-sup">KEY SUPPLIES</span>4 Critical Supply Indicators</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:4px 0">`;
+  keySupply.forEach(({lbl,field})=>{
+    const recs=data.filter(r=>r[field]!==null);
+    const yes=recs.filter(r=>r[field]===1).length;
+    const p=recs.length?Math.round(yes/recs.length*100):null;
+    const clr=p===null?'#ccc':p>=80?'#80BD41':p>=50?'#FFC20E':'#E2231A';
+    const bg=p===null?'#f8f9fb':p>=80?'#f0fae8':p>=50?'#fffbe6':'#fceaea';
+    h+=`<div style="background:${bg};border-radius:8px;padding:14px 16px;border:1px solid ${clr}40;text-align:center">
+      <div style="font-size:10px;font-weight:700;color:#374EA2;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${lbl}</div>
+      <div style="font-size:28px;font-weight:800;color:${clr}">${p!==null?p+'%':'—'}</div>
+      <div style="font-size:10px;color:#6c757d;margin-top:2px">${yes}/${recs.length} facilities</div>
+    </div>`;
+  });
+  h+=`</div></div>`;
+
+  // ── OLD TVA: Spider charts per facility ──
+  h+=`<div class="tbl-card" style="margin-bottom:16px">
+    <div class="tbl-title"><span class="tag t-tr">COMPLIANCE</span>360° Compliance View by Facility Type</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+      <div><div style="text-align:center;font-size:11px;font-weight:700;color:#1CABE2;margin-bottom:6px">HWC</div>
+        <div style="height:220px"><canvas id="cv-sp-hwc"></canvas></div></div>
+      <div><div style="text-align:center;font-size:11px;font-weight:700;color:#80BD41;margin-bottom:6px">VHSND</div>
+        <div style="height:220px"><canvas id="cv-sp-vhsnd"></canvas></div></div>
+      <div><div style="text-align:center;font-size:11px;font-weight:700;color:#374EA2;margin-bottom:6px">PHC</div>
+        <div style="height:220px"><canvas id="cv-sp-phc"></canvas></div></div>
+      <div><div style="text-align:center;font-size:11px;font-weight:700;color:#FFC20E;margin-bottom:6px">PMSMA</div>
+        <div style="height:220px"><canvas id="cv-sp-pmsma"></canvas></div></div>
+    </div>
+  </div>`;
+
+  // ── OLD TVA: Outcomes by facility type ──
+  const v  = data.filter(r=>r.facility==='VHSND');
+  const hw = data.filter(r=>r.facility==='HWC');
+  const ph = data.filter(r=>r.facility==='PHC');
+  const pm = data.filter(r=>r.facility==='PMSMA site');
+
+  h+=`<div class="tbl-card" style="margin-bottom:16px">
+    <div class="tbl-title"><span class="tag t-sup">OUTCOMES</span>Service Delivery & HIV/Syphilis Outcomes</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">`;
+  const outcomeBlocks = [
+    { title:'VHSND', clr:'#80BD41', rows:[
+      ['PW Attending',   sumF(v,'vhsnd_B1'),''],
+      ['PW Screened',    sumF(v,'vhsnd_B3'), pct2(sumF(v,'vhsnd_B3'),sumF(v,'vhsnd_B1'))],
+      ['HIV Reactive',   sumF(v,'vhsnd_B4'), pct2(sumF(v,'vhsnd_B4'),sumF(v,'vhsnd_B3'))],
+    ]},
+    { title:'HWC', clr:'#1CABE2', rows:[
+      ['PW Registered',  sumF(hw,'hwc_B1'),''],
+      ['PW Screened',    sumF(hw,'hwc_B2'),  pct2(sumF(hw,'hwc_B2'),sumF(hw,'hwc_B1'))],
+      ['ANC-1',          sumF(hw,'hwc_B21'), pct2(sumF(hw,'hwc_B21'),sumF(hw,'hwc_B2'))],
+      ['ANC-2',          sumF(hw,'hwc_B22'), pct2(sumF(hw,'hwc_B22'),sumF(hw,'hwc_B2'))],
+      ['ANC-3',          sumF(hw,'hwc_B23'), pct2(sumF(hw,'hwc_B23'),sumF(hw,'hwc_B2'))],
+      ['ANC-4',          sumF(hw,'hwc_B24'), pct2(sumF(hw,'hwc_B24'),sumF(hw,'hwc_B2'))],
+      ['HIV Reactive',   sumF(hw,'hwc_B3'),  pct2(sumF(hw,'hwc_B3'),sumF(hw,'hwc_B2'))],
+    ]},
+    { title:'PHC (CHC/PHC)', clr:'#374EA2', rows:[
+      ['ANC Registrations', sumF(ph,'phc_B1'),''],
+      ['PW Screened HIV',   sumF(ph,'phc_B3'), pct2(sumF(ph,'phc_B3'),sumF(ph,'phc_B1'))],
+      ['HIV Reactive',      sumF(ph,'phc_B2'), pct2(sumF(ph,'phc_B2'),sumF(ph,'phc_B3'))],
+      ['Syphilis Reactive', sumF(ph,'phc_B4'), pct2(sumF(ph,'phc_B4'),sumF(ph,'phc_B3'))],
+    ]},
+    { title:'PMSMA (CHC/PHC)', clr:'#FFC20E', rows:[
+      ['PW Attending',      sumF(pm,'pmsma_B1'),''],
+      ['PW Screened',       sumF(pm,'pmsma_B11'),  pct2(sumF(pm,'pmsma_B11'),sumF(pm,'pmsma_B1'))],
+      ['HIV Reactive',      sumF(pm,'pmsma_B12h'), pct2(sumF(pm,'pmsma_B12h'),sumF(pm,'pmsma_B11'))],
+      ['Syphilis Reactive', sumF(pm,'pmsma_B12s'), pct2(sumF(pm,'pmsma_B12s'),sumF(pm,'pmsma_B11'))],
+    ]},
+  ];
+  outcomeBlocks.forEach(({title,clr,rows})=>{
+    h+=`<div style="border-top:3px solid ${clr};padding-top:10px">
+      <div style="font-size:11.5px;font-weight:700;color:${clr};margin-bottom:8px">${title}</div>
+      <table style="min-width:0"><tbody>`;
+    rows.forEach(([lbl,val,rat])=>{
+      h+=`<tr><td style="font-size:11px;color:#444;padding:3px 0">${lbl}</td>
+        <td style="font-weight:700;color:#0058AB;text-align:right;padding:3px 6px">${val.toLocaleString()}</td>
+        <td style="font-size:10px;color:#198754;text-align:right;padding:3px 0">${rat}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  });
+  h+=`</div></div>`;
+
+  // ── OLD TVA: Block-wise coverage chart ──
+  h+=`<div class="cc" style="margin-bottom:16px">
+    <div class="cc-head">Block-wise Facility Coverage</div>
+    <div class="cc-sub">Number of supervisory visits per block by facility type</div>
+    <div class="cwrap" style="height:${Math.max(260,Object.keys(data.reduce((a,r)=>{a[r.block]=1;return a},{})).length*36+80)}px">
+      <canvas id="cv-cl-blk"></canvas></div>
+  </div>`;
+
   document.getElementById('c-client').innerHTML = h;
 
   // ── Clustered Bar: Target vs Achievement ──
@@ -1729,6 +1886,66 @@ function renderClientDash(data) {
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false}}, cutout:'60%'}
   });
+
+  // ── Stacked facility bar ──
+  const facData2  = [fc.HWC, fc.VHSND, fc.PHC, fc.PMSMA];
+  const facClrs2  = ['#1CABE2','#80BD41','#374EA2','#FFC20E'];
+  const facLabels2= ['HWC','VHSND','PHC','PMSMA'];
+  mkChart('cv-cl-fac',{type:'bar',
+    data:{labels:['Facility Visits'],datasets:facLabels2.map((lbl,i)=>({
+      label:lbl, data:[facData2[i]],
+      backgroundColor:facClrs2[i]+'cc', borderColor:facClrs2[i], borderWidth:1
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{position:'right',labels:{font:{size:11}}}},
+      scales:{x:{stacked:true,beginAtZero:true},y:{stacked:true,display:false}}}});
+
+  // ── Spider charts ──
+  const spiderAxes   = ['Supplies','Equipment','Training','Clinical','Linkage'];
+  const spiderFields = [
+    ['A1','A8','A9','A4'],['A6','A7','ACC1','ACC2','ACC7'],
+    ['D2','D3','D5','D6','D7'],['B11','B12','E4a'],['E5','E6','D6'],
+  ];
+  const spiderFacs = [
+    {id:'cv-sp-hwc',   fac:'HWC',       clr:'#1CABE2'},
+    {id:'cv-sp-vhsnd', fac:'VHSND',     clr:'#80BD41'},
+    {id:'cv-sp-phc',   fac:'PHC',       clr:'#374EA2'},
+    {id:'cv-sp-pmsma', fac:'PMSMA site',clr:'#FFC20E'},
+  ];
+  spiderFacs.forEach(({id,fac,clr})=>{
+    const facRecs = data.filter(r=>r.facility===fac);
+    const vals = spiderFields.map(cols=>{
+      const relevant = cols.map(c=>{
+        const r=facRecs.filter(x=>x[c]!==null);
+        return r.length?r.filter(x=>x[c]===1).length/r.length*100:null;
+      }).filter(x=>x!==null);
+      return relevant.length?Math.round(relevant.reduce((a,b)=>a+b)/relevant.length):0;
+    });
+    mkChart(id,{type:'radar',
+      data:{labels:spiderAxes,datasets:[{
+        label:fac, data:vals,
+        backgroundColor:clr+'33', borderColor:clr,
+        borderWidth:2, pointBackgroundColor:clr, pointRadius:3
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},
+          pointLabels:{font:{size:9}}}}}});
+  });
+
+  // ── Block coverage chart ──
+  const blks  = [...new Set(data.map(r=>r.block))].sort();
+  const fkeys2= ['HWC','VHSND','PHC','PMSMA site'];
+  mkChart('cv-cl-blk',{type:'bar',
+    data:{labels:blks,datasets:fkeys2.map((fk,i)=>({
+      label:fk==='PMSMA site'?'PMSMA':fk,
+      data:blks.map(b=>data.filter(r=>r.block===b&&r.facility===fk).length),
+      backgroundColor:facClrs2[i]+'cc',borderColor:facClrs2[i],borderWidth:1
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{labels:{font:{size:10}}}},
+      scales:{x:{stacked:true,beginAtZero:true,ticks:{font:{size:9}}},
+        y:{stacked:true,ticks:{font:{size:10}}}}}});
 }
 
 /* ═══════════════════════════════════════════════════════════
