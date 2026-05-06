@@ -1099,6 +1099,13 @@ function yPct(data, col, fac){
   return valid.length ? pct(valid.filter(r=>r[col]===1).length, valid.length) : null;
 }
 
+/* Returns {yes, total} for count display (a/b) */
+function yCount(data, col, fac){
+  const rows = fac ? data.filter(r=>r.facility===fac||r.facility===fac.replace(' site','')) : data;
+  const valid = rows.filter(r=>r[col]!==null);
+  return { yes: valid.filter(r=>r[col]===1).length, total: valid.length };
+}
+
 function showToast(msg){
   const t = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
@@ -1420,12 +1427,15 @@ function renderDash(data){
       t+=`<tr><td style="font-size:11.5px">${lbl}</td>`;
       ['VHSND','HWC','PHC','PMSMA site'].forEach(fac=>{
         if(facs&&!facs.some(f=>fac.startsWith(f)||f.startsWith(fac))){t+=`<td><span class="na">—</span></td>`;return;}
-        t+=`<td>${ragSpan(yPct(data,col,fac))}</td>`;
+        const _p=yPct(data,col,fac);
+        const {yes:_y,total:_t}=yCount(data,col,fac);
+        t+=`<td style="vertical-align:middle">${ragSpan(_p)}<br><span style="font-size:9px;color:#6c757d;white-space:nowrap">${_t>0?_y+'/'+_t:'—'}</span></td>`;
       });
       const src=facs?data.filter(r=>facs.some(f=>r.facility===f||r.facility.startsWith(f)||f.startsWith(r.facility))):data;
       const vd=src.filter(r=>r[col]!==null);
-      const ov=vd.length?pct(vd.filter(r=>r[col]===1).length,vd.length):null;
-      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div></td>`;
+      const ovYes=vd.filter(r=>r[col]===1).length;
+      const ov=vd.length?pct(ovYes,vd.length):null;
+      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div><div style="font-size:9px;color:#6c757d;margin-top:2px;white-space:nowrap">${vd.length>0?ovYes+'/'+vd.length:'—'}</div></td>`;
       t+=`<td style="font-size:10px;color:#a19f9d">${note||'All'}</td></tr>`;
     });
     return t+`</tbody></table></div>`;
@@ -1758,6 +1768,7 @@ function renderClientDash(data) {
     h += `<div style="background:${bg};border-radius:8px;padding:12px;border:1px solid ${clr}40;text-align:center">
       <div style="font-size:9.5px;font-weight:700;color:#374EA2;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">${lbl}</div>
       <div style="font-size:26px;font-weight:800;color:${clr}">${p!==null?p+'%':'—'}</div>
+      <div style="font-size:10px;color:#6c757d;margin-top:3px">${p!==null?yes+'/'+recs.length:'—'}</div>
     </div>`;
   });
   h += `</div></div>`;
@@ -2058,12 +2069,15 @@ function renderClientProg(data) {
       t+=`<tr><td style="font-size:11.5px">${lbl}</td>`;
       ['VHSND','HWC','PHC','PMSMA site'].forEach(fac=>{
         if(facs&&!facs.some(f=>fac.startsWith(f)||f.startsWith(fac))){t+=`<td><span class="na">—</span></td>`;return;}
-        t+=`<td>${ragSpan(yPct(data,col,fac))}</td>`;
+        const _p=yPct(data,col,fac);
+        const {yes:_y,total:_t}=yCount(data,col,fac);
+        t+=`<td style="vertical-align:middle">${ragSpan(_p)}<br><span style="font-size:9px;color:#6c757d;white-space:nowrap">${_t>0?_y+'/'+_t:'—'}</span></td>`;
       });
       const src=facs?data.filter(r=>facs.some(f=>r.facility===f||r.facility.startsWith(f)||f.startsWith(r.facility))):data;
       const vd=src.filter(r=>r[col]!==null);
-      const ov=vd.length?pct(vd.filter(r=>r[col]===1).length,vd.length):null;
-      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div></td>`;
+      const ovYes=vd.filter(r=>r[col]===1).length;
+      const ov=vd.length?pct(ovYes,vd.length):null;
+      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div><div style="font-size:9px;color:#6c757d;margin-top:2px;white-space:nowrap">${vd.length>0?ovYes+'/'+vd.length:'—'}</div></td>`;
       t+=`<td style="font-size:10px;color:#a19f9d">${note||'All'}</td></tr>`;
     });
     return t+`</tbody></table></div>`;
@@ -2304,12 +2318,15 @@ function renderClientCompliance(data){
       t+=`<tr><td style="font-size:11.5px">${lbl}</td>`;
       ['VHSND','HWC','PHC','PMSMA site'].forEach(fac=>{
         if(facs&&!facs.some(f=>fac.startsWith(f)||f.startsWith(fac))){t+=`<td><span class="na">—</span></td>`;return;}
-        t+=`<td>${ragSpan(yPct(data,col,fac))}</td>`;
+        const _p=yPct(data,col,fac);
+        const {yes:_y,total:_t}=yCount(data,col,fac);
+        t+=`<td style="vertical-align:middle">${ragSpan(_p)}<br><span style="font-size:9px;color:#6c757d;white-space:nowrap">${_t>0?_y+'/'+_t:'—'}</span></td>`;
       });
       const src=facs?data.filter(r=>facs.some(f=>r.facility===f||r.facility.startsWith(f)||f.startsWith(r.facility))):data;
       const vd=src.filter(r=>r[col]!==null);
-      const ov=vd.length?pct(vd.filter(r=>r[col]===1).length,vd.length):null;
-      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div></td>`;
+      const ovYes=vd.filter(r=>r[col]===1).length;
+      const ov=vd.length?pct(ovYes,vd.length):null;
+      t+=`<td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${ov||0}%;background:${barClr(ov)}"></div></div><span class="bar-lbl" style="color:${barClr(ov)}">${ov!==null?ov+'%':'—'}</span></div><div style="font-size:9px;color:#6c757d;margin-top:2px;white-space:nowrap">${vd.length>0?ovYes+'/'+vd.length:'—'}</div></td>`;
       t+=`<td style="font-size:10px;color:#a19f9d">${note||'All'}</td></tr>`;
     });
     return t+`</tbody></table></div>`;
